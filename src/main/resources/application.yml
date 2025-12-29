@@ -1,0 +1,11 @@
+server:
+  port: 9000
+spring:
+  application:
+    name: AgentServer
+  ai:
+    openai:
+      base-url: http://192.168.3.10:10001
+      options:
+        model: Qwen3-VL-32B-Instruct
+      api-key: 123
