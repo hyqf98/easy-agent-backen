@@ -2,6 +2,7 @@ package io.github.hijun.agent.config;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatModel;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,17 +16,18 @@ import org.springframework.context.annotation.Configuration;
  * @since 3.4.3
  */
 @Configuration
-public class SpringAiConfig {
+@EnableConfigurationProperties(SystemPromptProperties.class)
+public class SpringAiAutoConfiguration {
 
     /**
      * Create ChatClient.Builder bean
      *
-     * @param chatModel OpenAI chat model (auto-configured from application.yml)
+     * @param openAiChatModel OpenAI chat model (auto-configured from application.yml)
      * @return ChatClient.Builder
      * @since 3.4.3
      */
     @Bean
-    public ChatClient.Builder chatClientBuilder(OpenAiChatModel chatModel) {
-        return ChatClient.builder(chatModel);
+    public ChatClient chatClient(OpenAiChatModel openAiChatModel) {
+        return ChatClient.builder(openAiChatModel).build();
     }
 }

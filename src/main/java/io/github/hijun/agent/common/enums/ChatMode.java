@@ -1,8 +1,7 @@
 package io.github.hijun.agent.common.enums;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
-
-import java.util.Arrays;
 
 /**
  * Chat Mode
@@ -14,11 +13,27 @@ import java.util.Arrays;
  * @since 3.4.3
  */
 @Getter
+@AllArgsConstructor
 public enum ChatMode {
     /**
      * 默认聊天模式
      */
-    CHAT("chat", "聊天模式"),
+    CHAT("chat", "智能问答"),
+
+    /**
+     * m a r k d o w n.
+     */
+    MARKDOWN("markdown", "Markdown格式"),
+
+    /**
+     * h t m l.
+     */
+    HTML("html", "网页模式"),
+
+    /**
+     * p p t.
+     */
+    PPT("ppt", "PPT模式"),
 
     /**
      * 报告生成模式
@@ -33,30 +48,4 @@ public enum ChatMode {
      * description.
      */
     private final String description;
-
-    /**
-     * Chat Mode
-     *
-     * @param code code
-     * @param description description
-     * @since 3.4.3
-     */
-    ChatMode(String code, String description) {
-        this.code = code;
-        this.description = description;
-    }
-
-    /**
-     * 根据code获取枚举
-     *
-     * @param code 模式代码
-     * @return 聊天模式枚举，未找到则返回CHAT
-     * @since 3.4.3
-     */
-    public static ChatMode fromCode(String code) {
-        return Arrays.stream(values())
-                .filter(mode -> mode.code.equals(code))
-                .findFirst()
-                .orElse(CHAT);
-    }
 }

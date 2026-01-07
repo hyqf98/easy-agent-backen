@@ -1,12 +1,13 @@
 package io.github.hijun.agent.entity.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 /**
- * Thinking Content
+ * Sse Message
  *
  * @author haijun
  * @email "mailto:haijun@email.com"
@@ -14,18 +15,15 @@ import lombok.NoArgsConstructor;
  * @version 3.4.3
  * @since 3.4.3
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ThinkingContent {
-    /**
-     * 思考内容
-     */
-    private String thought;
+public class ContentMessage extends SseMessage {
 
     /**
-     * 思考步骤（可选）
+     * content.
      */
-    private Integer step;
+    private String content;
 }

@@ -9,14 +9,18 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  *
  * @author haijun
  * @date 2025-12-24
+ * @email "mailto:haijun@email.com"
+ * @version 1.0.0-SNAPSHOT
+ * @since 1.0.0-SNAPSHOT
  */
 @Configuration
-public class WebConfig implements WebMvcConfigurer {
+public class WebAutoConfiguration implements WebMvcConfigurer {
 
     /**
      * 配置跨域
      *
      * @param registry 跨域注册器
+     * @since 1.0.0-SNAPSHOT
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {

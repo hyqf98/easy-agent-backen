@@ -7,18 +7,19 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * React Agent Service
  *
  * @author haijun
+ * @version 3.4.3
  * @email "mailto:haijun@email.com"
  * @date 2025/12/24 16:59
- * @version 3.4.3
  * @since 3.4.3
  */
-public interface ReactAgentService {
+public interface ModelService {
+
     /**
-     * 执行ReAct流程
+     * Chat
      *
-     * @param request 请求
-     * @return SSE发射器
+     * @param chatRequest chat request
+     * @return sse emitter
      * @since 3.4.3
      */
-    SseEmitter executeReact(ChatRequest request);
+    SseEmitter agent(ChatRequest chatRequest);
 }

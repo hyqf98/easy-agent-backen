@@ -1,12 +1,13 @@
 package io.github.hijun.agent.entity.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 /**
- * Content Chunk Content
+ * Sse Message
  *
  * @author haijun
  * @email "mailto:haijun@email.com"
@@ -14,19 +15,23 @@ import lombok.NoArgsConstructor;
  * @version 3.4.3
  * @since 3.4.3
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ContentChunkContent {
-    /**
-     * 内容片段
-     */
-    private String chunk;
+public class ToolMessage extends SseMessage {
 
     /**
-     * 是否为Markdown格式
+     * id.
      */
-    @Builder.Default
-    private Boolean isMarkdown = true;
+    private String id;
+    /**
+     * name.
+     */
+    private String name;
+    /**
+     * result.
+     */
+    private String result;
 }

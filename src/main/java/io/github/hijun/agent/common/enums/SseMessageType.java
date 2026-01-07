@@ -1,5 +1,6 @@
 package io.github.hijun.agent.common.enums;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
@@ -12,6 +13,7 @@ import lombok.Getter;
  * @since 3.4.3
  */
 @Getter
+@AllArgsConstructor
 public enum SseMessageType {
     /**
      * 思考中
@@ -34,11 +36,6 @@ public enum SseMessageType {
     CONTENT_CHUNK("content_chunk", "内容输出"),
 
     /**
-     * 报告内容更新
-     */
-    REPORT_UPDATE("report_update", "报告更新"),
-
-    /**
      * 完成
      */
     COMPLETED("completed", "完成"),
@@ -56,16 +53,4 @@ public enum SseMessageType {
      * description.
      */
     private final String description;
-
-    /**
-     * Sse Message Type
-     *
-     * @param code code
-     * @param description description
-     * @since 3.4.3
-     */
-    SseMessageType(String code, String description) {
-        this.code = code;
-        this.description = description;
-    }
 }

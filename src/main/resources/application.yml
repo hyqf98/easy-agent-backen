@@ -1,11 +1,17 @@
 server:
-  port: 9000
+  port: 20000
 spring:
   application:
     name: AgentServer
   ai:
     openai:
+      chat:
+        options:
+          model: Qwen3-VL-32B-Instruct
       base-url: http://192.168.3.10:10001
-      options:
-        model: Qwen3-VL-32B-Instruct
       api-key: 123
+  config:
+    import: classpath:application_prompt.yml
+agent:
+  file:
+    storage-path: /Users/haijun/Work/my-work/easy-agent/files/

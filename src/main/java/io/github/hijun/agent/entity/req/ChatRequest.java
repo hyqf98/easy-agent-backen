@@ -1,7 +1,12 @@
 package io.github.hijun.agent.entity.req;
 
+import io.github.hijun.agent.common.enums.AdditionalFeatures;
+import io.github.hijun.agent.common.enums.ChatMode;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * Chat Request
@@ -14,16 +19,32 @@ import lombok.Data;
  */
 @Data
 public class ChatRequest {
+
+    /**
+     * 自定义提示词
+     */
+    private String userPrompt;
+
     /**
      * 用户消息
      */
     @NotBlank(message = "消息内容不能为空")
-    private String message;
+    private String userQuery;
 
     /**
      * 聊天模式
      */
-    private String mode = "chat";
+    private ChatMode mode;
+
+    /**
+     * 附加功能
+     */
+    private List<AdditionalFeatures> additionalFeatures;
+
+    /**
+     * 文件列表
+     */
+    private List<MultipartFile> files;
 
     /**
      * 会话ID（可选，用于多轮对话）
