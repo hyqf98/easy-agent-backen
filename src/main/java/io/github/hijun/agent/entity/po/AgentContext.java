@@ -2,6 +2,7 @@ package io.github.hijun.agent.entity.po;
 
 import cn.hutool.core.collection.CollUtil;
 import io.github.hijun.agent.common.enums.AgentStatus;
+import io.github.hijun.agent.common.enums.ChatMode;
 import io.github.hijun.agent.entity.dto.SseMessage;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.LinkedList;
@@ -42,12 +44,20 @@ public class AgentContext {
      */
     private AgentStatus agentStatus;
 
-
-
     /**
      * user query.
      */
     private String userQuery;
+
+    /**
+     * user prompt.
+     */
+    private String userPrompt;
+
+    /**
+     * chat mode.
+     */
+    private ChatMode chatMode;
 
     /**
      * concurrent step.
@@ -67,6 +77,12 @@ public class AgentContext {
      */
     @Builder.Default
     private List<AssistantMessage.ToolCall> observeTools = new LinkedList<>();
+
+
+    /**
+     * 当前对话可用的模型
+     */
+    private List<ToolCallback> toolCallbacks;
 
     /**
      * sse emitter.

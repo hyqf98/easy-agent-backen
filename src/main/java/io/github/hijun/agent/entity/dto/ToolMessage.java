@@ -1,5 +1,6 @@
 package io.github.hijun.agent.entity.dto;
 
+import io.github.hijun.agent.common.enums.ToolStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -10,9 +11,9 @@ import lombok.experimental.SuperBuilder;
  * Sse Message
  *
  * @author haijun
+ * @version 3.4.3
  * @email "mailto:haijun@email.com"
  * @date 2025/12/24 16:53
- * @version 3.4.3
  * @since 3.4.3
  */
 @EqualsAndHashCode(callSuper = true)
@@ -30,6 +31,12 @@ public class ToolMessage extends SseMessage {
      * name.
      */
     private String name;
+
+    /**
+     * result.
+     */
+    private ToolStatus toolStatus;
+
     /**
      * result.
      */

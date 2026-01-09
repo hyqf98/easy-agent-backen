@@ -1,5 +1,10 @@
 package io.github.hijun.agent.config;
 
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import io.github.hijun.agent.common.serializer.CodeEnumDeserializer;
+import io.github.hijun.agent.common.serializer.CodeEnumSerializer;
+import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -25,10 +30,26 @@ public class WebAutoConfiguration implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:5173", "http://localhost:5174")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedOriginPatterns("*")
                 .allowedHeaders("*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowCredentials(true)
                 .maxAge(3600);
+    }
+
+    /**
+     * Jackson Customizer
+     *
+     * @return jackson2 object mapper builder customizer
+     * @since 1.0.0-SNAPSHOT
+     */
+    @Bean
+    public Jackson2ObjectMapperBuilderCustomizer jacksonCustomizer() {
+        return builder -> {
+            SimpleModule module = new SimpleModule();
+            module.addSerializer(Enum.class, new CodeEnumSerializer<>());
+            module.addDeserializer(Enum.class, new CodeEnumDeserializer());
+            builder.modules(module);
+        };
     }
 }

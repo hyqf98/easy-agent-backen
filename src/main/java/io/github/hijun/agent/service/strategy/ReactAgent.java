@@ -205,11 +205,13 @@ public class ReactAgent extends BaseAgent {
                 .system(systemSpec -> {
                     systemSpec.text(systemPrompt)
                             .params(this.getContextParams())
+                            .param("mode", agentContext.getChatMode().getDescription())
                             .param("query", agentContext.getUserQuery());
                 })
                 .messages(memory)
                 .stream()
                 .chatResponse();
+        String summary = "";
         responseFlux.doOnNext(chatResponse -> {
             if (chatResponse == null) {
                 return;

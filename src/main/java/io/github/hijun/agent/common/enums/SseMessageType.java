@@ -18,7 +18,7 @@ public enum SseMessageType {
     /**
      * 思考中
      */
-    THINKING("thinking", "思考中"),
+    THINKING("thinking", "思考"),
 
     /**
      * 工具调用开始
@@ -33,7 +33,7 @@ public enum SseMessageType {
     /**
      * 内容流式输出
      */
-    CONTENT_CHUNK("content_chunk", "内容输出"),
+    CONTENT_CHUNK("final_answer", "内容中介"),
 
     /**
      * 完成
