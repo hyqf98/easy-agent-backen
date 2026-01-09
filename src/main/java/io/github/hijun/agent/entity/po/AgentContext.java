@@ -40,6 +40,16 @@ public class AgentContext {
     private String sessionId;
 
     /**
+     * request id.
+     */
+    private String requestId;
+
+    /**
+     * chat mode.
+     */
+    private ChatMode chatMode;
+
+    /**
      * agent status.
      */
     private AgentStatus agentStatus;
@@ -55,9 +65,15 @@ public class AgentContext {
     private String userPrompt;
 
     /**
-     * chat mode.
+     * 用户提交的文件连接信息
      */
-    private ChatMode chatMode;
+    private List<String> userUploadFiles;
+
+    /**
+     * 任务执行过程中产生的数据
+     */
+    @Builder.Default
+    private List<String> productFiles = new LinkedList<>();
 
     /**
      * concurrent step.

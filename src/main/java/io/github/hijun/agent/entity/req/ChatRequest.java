@@ -4,7 +4,6 @@ import io.github.hijun.agent.common.enums.AdditionalFeatures;
 import io.github.hijun.agent.common.enums.ChatMode;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -32,6 +31,16 @@ public class ChatRequest {
     private String userQuery;
 
     /**
+     * 会话ID（可选，用于多轮对话）
+     */
+    private String sessionId;
+
+    /**
+     * request id.
+     */
+    private String requestId;
+
+    /**
      * 聊天模式
      */
     private ChatMode mode;
@@ -42,12 +51,7 @@ public class ChatRequest {
     private List<AdditionalFeatures> additionalFeatures;
 
     /**
-     * 文件列表
+     * 用户提交的文件连接信息
      */
-    private List<MultipartFile> files;
-
-    /**
-     * 会话ID（可选，用于多轮对话）
-     */
-    private String sessionId;
+    private List<String> userUploadFiles;
 }

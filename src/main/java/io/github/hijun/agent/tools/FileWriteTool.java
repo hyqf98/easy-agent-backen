@@ -47,7 +47,7 @@ public class FileWriteTool {
      * @date 2026/1/7 15:16
      * @since 1.0.0-SNAPSHOT
      */
-    @JsonClassDescription("Parameters for writing content to a file")
+    @JsonClassDescription("报告生成参数实体")
     public record FileWriteParams(
             @JsonPropertyDescription("文件名，不含扩展名") String fileName,
             @JsonPropertyDescription("文件类型，支持 md 或 html") String fileType,

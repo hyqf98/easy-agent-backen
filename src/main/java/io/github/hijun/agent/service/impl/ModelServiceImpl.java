@@ -66,6 +66,7 @@ public class ModelServiceImpl implements ModelService, ApplicationContextAware {
         ToolCallback[] toolCallbacks = this.getToolCallbacks(chatRequest);
         AgentContext agentContext = AgentContext.builder()
                 .sessionId(chatRequest.getSessionId())
+                .requestId(chatRequest.getRequestId())
                 .sseEmitter(sseEmitter)
                 .userPrompt(userPrompt)
                 .chatMode(chatRequest.getMode())

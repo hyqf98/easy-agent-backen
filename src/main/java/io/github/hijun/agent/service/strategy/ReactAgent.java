@@ -2,9 +2,11 @@ package io.github.hijun.agent.service.strategy;
 
 import cn.hutool.core.date.DateUtil;
 import io.github.hijun.agent.common.enums.SseMessageType;
+import io.github.hijun.agent.common.enums.ToolStatus;
 import io.github.hijun.agent.config.SystemPromptProperties;
 import io.github.hijun.agent.config.SystemPromptProperties.AgentConfig;
 import io.github.hijun.agent.entity.dto.ContentMessage;
+import io.github.hijun.agent.entity.dto.ToolMessage;
 import io.github.hijun.agent.entity.po.AgentContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -14,13 +16,9 @@ import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.template.TemplateRenderer;
 import org.springframework.ai.template.ValidationMode;
 import org.springframework.ai.template.st.StTemplateRenderer;
-import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.resolution.StaticToolCallbackResolver;
-import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
@@ -58,19 +56,9 @@ public class ReactAgent extends BaseAgent {
     private final TemplateRenderer templateRenderer;
 
     /**
-     * tool callback resolver.
-     */
-    private final ToolCallbackResolver toolCallbackResolver;
-
-    /**
-     * tool callbacks.
-     */
-    private final List<ToolCallback> toolCallbacks;
-
-    /**
      * React Agent
      *
-     * @param chatClient         chat client
+     * @param chatClient             chat client
      * @param systemPromptProperties system prompt config
      * @since 3.4.3
      */
@@ -84,10 +72,6 @@ public class ReactAgent extends BaseAgent {
                 '}',
                 ValidationMode.WARN,
                 true);
-
-        // 从ToolService获取所有工具回调
-        this.toolCallbacks = List.of();
-        this.toolCallbackResolver = new StaticToolCallbackResolver(this.toolCallbacks);
     }
 
     /**
@@ -99,19 +83,8 @@ public class ReactAgent extends BaseAgent {
      */
     @Override
     protected boolean think(AgentContext agentContext) {
-        ToolCallingChatOptions toolCallingChatOptions = ToolCallingChatOptions.builder()
-                .internalToolExecutionEnabled(Boolean.FALSE)
-                .toolCallbacks(this.toolCallbacks)
-                .build();
-        String systemPrompt = this.reactAgentConfig.getSystemPrompt();
-        ChatClient.ChatClientRequestSpec requestSpec = this.chatClient
-                .prompt()
-                .system(systemSpec -> systemSpec.text(systemPrompt)
-                        .params(this.getContextParams()))
-                .messages(agentContext.getMemory())
-                .options(toolCallingChatOptions)
-                .templateRenderer(this.templateRenderer);
-        Flux<ChatResponse> responseFlux = requestSpec.stream().chatResponse();
+        List<Message> memory = agentContext.getMemory();
+        Flux<ChatResponse> responseFlux = this.callLLM(memory, agentContext.getToolCallbacks(), false);
         // 发送思考数据
         return Boolean.TRUE.equals(responseFlux.doOnNext(chatResponse -> {
                     if (chatResponse == null) {
@@ -152,38 +125,25 @@ public class ReactAgent extends BaseAgent {
     @Override
     protected String action(AgentContext agentContext) {
         List<AssistantMessage.ToolCall> observeTools = agentContext.getObserveTools();
-        List<CompletableFuture<ToolResponse>> allToolCallTask = observeTools.stream()
-                .map(toolCall -> CompletableFuture.supplyAsync(() -> {
-                    String id = toolCall.id();
-                    String toolName = toolCall.name();
-                    String arguments = toolCall.arguments();
-                    try {
-                        ToolCallback toolCallback = this.toolCallbackResolver.resolve(toolName);
-                        if (!StringUtils.hasText(arguments)) {
-                            log.warn("Tool call arguments are null or empty for tool: {}. Using empty JSON object as default.", toolName);
-                            arguments = "{}";
-                        }
-                        if (toolCallback == null) {
-                            log.warn("LLM may have adapted the tool name '{}', especially if the name was truncated due to length limits. If this is the case, you can customize the prefixing and processing logic using McpToolNamePrefixGenerator", toolName);
-                            return null;
-                        }
-                        String result = toolCallback.call(arguments);
-                        return new ToolResponse(id, toolName, result);
-                    } catch (Exception e) {
-                        log.error("Tool call error: {}", e.getMessage());
-                        return new ToolResponse(id, toolName, e.getMessage());
-                    }
+
+        List<CompletableFuture<ToolResponse>> completableFutures = observeTools.stream().map(toolCall ->
+                CompletableFuture.supplyAsync(() -> {
+                    ToolResponse toolResponse = this.callTool(agentContext, toolCall);
+                    ToolMessage toolMessage = ToolMessage.builder()
+                            .id(toolCall.id())
+                            .name(toolCall.name())
+                            .toolStatus(ToolStatus.SUCCESS)
+                            .result(toolResponse.responseData())
+                            .build();
+                    agentContext.sendMessage(toolMessage);
+                    return toolResponse;
                 })).toList();
-        CompletableFuture<Void> completableFuture = CompletableFuture.allOf(allToolCallTask.toArray(new CompletableFuture[0]));
-        completableFuture.join();
-        List<ToolResponse> toolCallResult = allToolCallTask.stream().map(callTask -> {
-                    try {
-                        return callTask.get();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                })
-                .toList();
+
+        CompletableFuture.allOf(completableFutures.toArray(new CompletableFuture[0])).join();
+        List<ToolResponse> toolCallResult = completableFutures
+                .stream()
+                .map(CompletableFuture::join).toList();
+
         ToolResponseMessage toolResponseMessage = ToolResponseMessage.builder()
                 .responses(toolCallResult)
                 .build();
@@ -197,8 +157,7 @@ public class ReactAgent extends BaseAgent {
      * @param agentContext agent context
      * @since 1.0.0-SNAPSHOT
      */
-    @Override
-    protected void observe(AgentContext agentContext) {
+    public void observe(AgentContext agentContext) {
         List<Message> memory = agentContext.getMemory();
         String systemPrompt = this.summaryAgentConfig.getSystemPrompt();
         Flux<ChatResponse> responseFlux = this.chatClient.prompt()
@@ -248,8 +207,9 @@ public class ReactAgent extends BaseAgent {
      * @since 1.0.0-SNAPSHOT
      */
     @Override
-    public String getDefaultSystemPrompt() {
-        return this.reactAgentConfig.getSystemPrompt();
+    protected String getSystemPrompt() {
+        String systemPrompt = this.reactAgentConfig.getSystemPrompt();
+        return this.templateRenderer.apply(systemPrompt, this.getContextParams());
     }
 
     /**

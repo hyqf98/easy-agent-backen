@@ -6,9 +6,17 @@ import io.github.hijun.agent.common.enums.SseMessageType;
 import io.github.hijun.agent.entity.dto.ContentMessage;
 import io.github.hijun.agent.entity.po.AgentContext;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.tool.ToolCallback;
+import org.springframework.ai.tool.resolution.StaticToolCallbackResolver;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 /**
  * React Agent
@@ -19,9 +27,10 @@ import org.springframework.ai.chat.messages.UserMessage;
  * @date 2025/12/30 13:30
  * @since 3.4.3
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Slf4j
-public abstract class BaseAgent {
+public abstract class BaseAgent extends BaseLLM<AgentContext> {
 
     /**
      * max tool call depth.
@@ -34,18 +43,13 @@ public abstract class BaseAgent {
     private Integer maxStep;
 
     /**
-     * chat client.
-     */
-    protected final ChatClient chatClient;
-
-    /**
      * React Agent
      *
      * @param chatClient chat client
      * @since 3.4.3
      */
     public BaseAgent(ChatClient chatClient) {
-        this.chatClient = chatClient;
+        super(chatClient);
     }
 
 
@@ -53,9 +57,10 @@ public abstract class BaseAgent {
      * Do Chat
      *
      * @param agentContext agent context
-     * @return sse emitter
+     * @return agent context
      * @since 1.0.0-SNAPSHOT
      */
+    @Override
     public AgentContext run(AgentContext agentContext) {
         agentContext.setAgentStatus(AgentStatus.IDLE);
         try {
@@ -78,8 +83,6 @@ public abstract class BaseAgent {
                 }
                 this.step(agentContext);
             }
-            // 对结果进行总结
-            this.observe(agentContext);
             agentContext.setAgentStatus(AgentStatus.FINISHED);
             agentContext.complete();
         } catch (Exception e) {
@@ -130,30 +133,41 @@ public abstract class BaseAgent {
     protected abstract String action(AgentContext agentContext);
 
     /**
-     * 观察结果
-     *
-     * @param agentContext agent context
-     * @since 3.4.3
-     */
-    protected abstract void observe(AgentContext agentContext);
-
-    /**
-     * Get Default System Prompt
-     *
-     * @return string
-     * @since 3.4.3
-     */
-    protected String getDefaultSystemPrompt() {
-        return "You are a helpful assistant.";
-    }
-
-    /**
      * Get Default Next Step Prompt
      *
      * @return string
      * @since 3.4.3
      */
     protected String getDefaultNextStepPrompt() {
-        return "You are a helpful assistant.";
+        return "";
+    }
+
+    /**
+     * Call L L M With Tool
+     *
+     * @param agentContext agent context
+     * @param toolCall tool call
+     * @return list
+     * @since 1.0.0-SNAPSHOT
+     */
+    public ToolResponse callTool(AgentContext agentContext,
+                                       AssistantMessage.ToolCall toolCall) {
+        List<ToolCallback> toolCallbacks = agentContext.getToolCallbacks();
+        StaticToolCallbackResolver resolver = new StaticToolCallbackResolver(toolCallbacks);
+        String id = toolCall.id();
+        String toolName = toolCall.name();
+        String arguments = toolCall.arguments();
+        try {
+            ToolCallback toolCallback = resolver.resolve(toolName);
+            if (!StringUtils.hasText(arguments)) {
+                log.warn("Tool call arguments are null or empty for tool: {}. Using empty JSON object as default.", toolName);
+                arguments = "{}";
+            }
+            String result = toolCallback.call(arguments);
+            return new ToolResponse(id, toolName, result);
+        } catch (Exception e) {
+            log.error("Tool call error: {}", e.getMessage());
+            return new ToolResponse(id, toolName, e.getMessage());
+        }
     }
 }
