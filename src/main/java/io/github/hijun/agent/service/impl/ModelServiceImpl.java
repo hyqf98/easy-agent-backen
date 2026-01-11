@@ -58,24 +58,46 @@ public class ModelServiceImpl implements ModelService, ApplicationContextAware {
     @Override
     public SseEmitter agent(ChatRequest chatRequest) {
         SseEmitter sseEmitter = new SseEmitter(30_0000L);
-        String userPrompt = chatRequest.getUserPrompt();
-        if (StrUtil.isNotBlank(userPrompt)) {
-            // 添加用户自定义的系统提示词
+
+        // 设置当前请求的模型配置（如果提供了）
+        String modelProvider = chatRequest.getModelProvider();
+        String modelId = chatRequest.getModelId();
+        if (StrUtil.isNotBlank(modelProvider) && StrUtil.isNotBlank(modelId)) {
+            DynamicChatModel.setCurrentModel(modelProvider, modelId);
+            log.debug("Set current model: provider={}, model={}", modelProvider, modelId);
         }
 
-        ToolCallback[] toolCallbacks = this.getToolCallbacks(chatRequest);
-        AgentContext agentContext = AgentContext.builder()
-                .sessionId(chatRequest.getSessionId())
-                .requestId(chatRequest.getRequestId())
-                .sseEmitter(sseEmitter)
-                .userPrompt(userPrompt)
-                .chatMode(chatRequest.getMode())
-                .userQuery(chatRequest.getUserQuery())
-                .sseEmitter(sseEmitter)
-                .toolCallbacks(Arrays.asList(toolCallbacks))
-                .build();
-        CompletableFuture.runAsync(() -> this.reactAgent.run(agentContext));
-        return sseEmitter;
+        try {
+            String userPrompt = chatRequest.getUserPrompt();
+            if (StrUtil.isNotBlank(userPrompt)) {
+                // 添加用户自定义的系统提示词
+            }
+
+            ToolCallback[] toolCallbacks = this.getToolCallbacks(chatRequest);
+            AgentContext agentContext = AgentContext.builder()
+                    .sessionId(chatRequest.getSessionId())
+                    .requestId(chatRequest.getRequestId())
+                    .sseEmitter(sseEmitter)
+                    .userPrompt(userPrompt)
+                    .chatMode(chatRequest.getMode())
+                    .userQuery(chatRequest.getUserQuery())
+                    .sseEmitter(sseEmitter)
+                    .toolCallbacks(Arrays.asList(toolCallbacks))
+                    .build();
+            CompletableFuture.runAsync(() -> {
+                try {
+                    this.reactAgent.run(agentContext);
+                } finally {
+                    // 清除当前请求的模型配置
+                    DynamicChatModel.clearCurrentModel();
+                }
+            });
+            return sseEmitter;
+        } catch (Exception e) {
+            // 发生异常时也要清除 ThreadLocal
+            DynamicChatModel.clearCurrentModel();
+            throw e;
+        }
     }
 
 
