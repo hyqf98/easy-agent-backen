@@ -1,8 +1,7 @@
 package io.github.hijun.agent.config;
 
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import io.github.hijun.agent.common.serializer.CodeEnumDeserializer;
-import io.github.hijun.agent.common.serializer.CodeEnumSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.hijun.agent.utils.JSONS;
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,7 +13,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  *
  * @author haijun
  * @date 2025-12-24
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @version 1.0.0-SNAPSHOT
  * @since 1.0.0-SNAPSHOT
  */
@@ -46,10 +45,9 @@ public class WebAutoConfiguration implements WebMvcConfigurer {
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer jacksonCustomizer() {
         return builder -> {
-            SimpleModule module = new SimpleModule();
-            module.addSerializer(Enum.class, new CodeEnumSerializer<>());
-            module.addDeserializer(Enum.class, new CodeEnumDeserializer());
-            builder.modules(module);
+            // 使用JSONS中的配置逻辑
+            ObjectMapper objectMapper = JSONS.getObjectMapper();
+            builder.createXmlMapper(false).build(objectMapper);
         };
     }
 }

@@ -2,14 +2,21 @@ package io.github.hijun.agent.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import io.github.hijun.agent.common.enums.McpTransportMode;
 import io.github.hijun.agent.common.enums.ModelProvider;
-import io.github.hijun.agent.entity.dto.*;
-import io.github.hijun.agent.entity.po.*;
+import io.github.hijun.agent.entity.dto.ModelInfoDTO;
+import io.github.hijun.agent.entity.dto.ModelProviderDTO;
+import io.github.hijun.agent.entity.dto.ProviderInfoDTO;
+import io.github.hijun.agent.entity.dto.SettingsConfigDTO;
+import io.github.hijun.agent.entity.dto.TestModelResultDTO;
+import io.github.hijun.agent.entity.po.McpServerConfig;
+import io.github.hijun.agent.entity.po.ModelConfig;
+import io.github.hijun.agent.entity.po.ModelProviderConfig;
 import io.github.hijun.agent.entity.req.SaveConfigRequest;
 import io.github.hijun.agent.entity.req.TestModelRequest;
+import io.github.hijun.agent.mapper.McpServerConfigMapper;
 import io.github.hijun.agent.mapper.ModelConfigMapper;
 import io.github.hijun.agent.mapper.ModelProviderConfigMapper;
-import io.github.hijun.agent.mapper.McpServerConfigMapper;
 import io.github.hijun.agent.service.ModelProviderStrategy;
 import io.github.hijun.agent.service.SettingsService;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +36,7 @@ import java.util.stream.Stream;
  *
  * @author haijun
  * @version 3.4.3
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/01/11
  * @since 3.4.3
  */
@@ -58,29 +65,36 @@ public class SettingsServiceImpl implements SettingsService {
      */
     private final ModelProviderStrategy modelProviderStrategy;
 
+    /**
+     * Get Config
+     *
+     * @return settings config d t o
+     * @since 1.0.0-SNAPSHOT
+     */
     @Override
     public SettingsConfigDTO getConfig() {
         try {
             // 查询 MCP 服务器配置
-            List<McpServerConfig> mcpServerConfigs = mcpServerConfigMapper.selectList(null);
+            List<McpServerConfig> mcpServerConfigs = this.mcpServerConfigMapper.selectList(null);
             List<SettingsConfigDTO.McpServerDTO> mcpServers = mcpServerConfigs.stream()
                     .map(config -> SettingsConfigDTO.McpServerDTO.builder()
                             .id(config.getId())
                             .name(config.getServerName())
                             .url(config.getServerUrl())
+                            .transportMode(config.getTransportMode() != null ? config.getTransportMode().getCode() : "sse")
                             .enabled(config.getEnabled())
                             .description(config.getDescription())
                             .build())
                     .collect(Collectors.toList());
 
             // 查询模型提供商配置
-            List<ModelProviderConfig> providerConfigs = modelProviderConfigMapper.selectList(null);
+            List<ModelProviderConfig> providerConfigs = this.modelProviderConfigMapper.selectList(null);
             List<ModelProviderDTO> modelProviders = providerConfigs.stream()
                     .map(config -> {
                         // 查询该提供商下的模型列表
                         List<ModelConfig> modelConfigs;
                         try {
-                            modelConfigs = modelConfigMapper.selectList(
+                            modelConfigs = this.modelConfigMapper.selectList(
                                     new LambdaQueryWrapper<ModelConfig>()
                                             .eq(ModelConfig::getProviderConfigId, config.getId())
                             );
@@ -102,7 +116,7 @@ public class SettingsServiceImpl implements SettingsService {
                                 .providerType(config.getProviderType())
                                 .providerName(config.getProviderType().getName())
                                 .enabled(config.getEnabled())
-                                .apiKey(maskApiKey(config.getApiKey()))
+                                .apiKey(this.maskApiKey(config.getApiKey()))
                                 .baseUrl(config.getBaseUrl())
                                 .models(models)
                                 .build();
@@ -134,18 +148,24 @@ public class SettingsServiceImpl implements SettingsService {
         }
     }
 
+    /**
+     * Save Config
+     *
+     * @param request request
+     * @since 1.0.0-SNAPSHOT
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveConfig(SaveConfigRequest request) {
         try {
             // 保存 MCP 服务器配置
             if (request.getMcpServers() != null) {
-                saveMcpServers(request.getMcpServers());
+                this.saveMcpServers(request.getMcpServers());
             }
 
             // 保存模型提供商配置
             if (request.getModelProviders() != null) {
-                saveModelProviders(request.getModelProviders());
+                this.saveModelProviders(request.getModelProviders());
             }
         } catch (Exception e) {
             log.error("Failed to save config: {}", e.getMessage(), e);
@@ -153,6 +173,12 @@ public class SettingsServiceImpl implements SettingsService {
         }
     }
 
+    /**
+     * Get Providers
+     *
+     * @return list
+     * @since 1.0.0-SNAPSHOT
+     */
     @Override
     public List<ProviderInfoDTO> getProviders() {
         try {
@@ -171,12 +197,19 @@ public class SettingsServiceImpl implements SettingsService {
         }
     }
 
+    /**
+     * Test Model
+     *
+     * @param request request
+     * @return test model result d t o
+     * @since 1.0.0-SNAPSHOT
+     */
     @Override
     public TestModelResultDTO testModel(TestModelRequest request) {
         long startTime = System.currentTimeMillis();
         try {
             // 使用策略模式测试模型连接
-            modelProviderStrategy.testConnection(request);
+            this.modelProviderStrategy.testConnection(request);
 
             long latency = System.currentTimeMillis() - startTime;
             return TestModelResultDTO.builder()
@@ -201,23 +234,35 @@ public class SettingsServiceImpl implements SettingsService {
      * 删除所有现有配置，然后插入新的配置列表
      *
      * @param servers MCP 服务器配置列表
+     * @since 1.0.0-SNAPSHOT
      */
     private void saveMcpServers(List<SaveConfigRequest.McpServerConfig> servers) {
         try {
             // 删除所有现有配置
-            mcpServerConfigMapper.delete(null);
+            this.mcpServerConfigMapper.delete(null);
 
             // 插入新配置
             for (SaveConfigRequest.McpServerConfig server : servers) {
+                // 解析传输模式，默认为 SSE
+                McpTransportMode transportMode = McpTransportMode.SSE;
+                if (server.getTransportMode() != null && !server.getTransportMode().isEmpty()) {
+                    try {
+                        transportMode = McpTransportMode.fromCode(server.getTransportMode());
+                    } catch (IllegalArgumentException e) {
+                        log.warn("Invalid transport mode '{}', using default SSE", server.getTransportMode());
+                    }
+                }
+
                 McpServerConfig config = McpServerConfig.builder()
                         .serverName(server.getName())
                         .serverUrl(server.getUrl())
+                        .transportMode(transportMode)
                         .enabled(server.getEnabled() != null ? server.getEnabled() : true)
                         .description(server.getDescription())
                         .createTime(System.currentTimeMillis())
                         .updateTime(System.currentTimeMillis())
                         .build();
-                mcpServerConfigMapper.insert(config);
+                this.mcpServerConfigMapper.insert(config);
             }
         } catch (Exception e) {
             log.error("Failed to save MCP servers: {}", e.getMessage(), e);
@@ -231,6 +276,7 @@ public class SettingsServiceImpl implements SettingsService {
      * 根据配置 ID 判断是新增还是更新，并保存关联的模型列表
      *
      * @param providers 模型提供商配置列表
+     * @since 1.0.0-SNAPSHOT
      */
     private void saveModelProviders(List<SaveConfigRequest.ModelProviderConfig> providers) {
         for (SaveConfigRequest.ModelProviderConfig provider : providers) {
@@ -245,18 +291,18 @@ public class SettingsServiceImpl implements SettingsService {
                             .baseUrl(provider.getBaseUrl())
                             .updateTime(System.currentTimeMillis())
                             .build();
-                    modelProviderConfigMapper.updateById(config);
+                    this.modelProviderConfigMapper.updateById(config);
 
                     // 删除并重新添加模型
                     try {
-                        modelConfigMapper.delete(
+                        this.modelConfigMapper.delete(
                                 new LambdaQueryWrapper<ModelConfig>()
                                         .eq(ModelConfig::getProviderConfigId, provider.getId())
                         );
                     } catch (Exception e) {
                         log.warn("Failed to delete models for provider {}: {}", provider.getId(), e.getMessage());
                     }
-                    saveModels(provider.getId(), provider.getModels());
+                    this.saveModels(provider.getId(), provider.getModels());
                 } else {
                     // 插入新配置
                     ModelProviderConfig config = ModelProviderConfig.builder()
@@ -267,11 +313,11 @@ public class SettingsServiceImpl implements SettingsService {
                             .createTime(System.currentTimeMillis())
                             .updateTime(System.currentTimeMillis())
                             .build();
-                    modelProviderConfigMapper.insert(config);
+                    this.modelProviderConfigMapper.insert(config);
 
                     // 添加模型
                     if (provider.getModels() != null) {
-                        saveModels(config.getId(), provider.getModels());
+                        this.saveModels(config.getId(), provider.getModels());
                     }
                 }
             } catch (Exception e) {
@@ -288,6 +334,7 @@ public class SettingsServiceImpl implements SettingsService {
      *
      * @param providerConfigId 提供商配置 ID
      * @param models           模型配置列表
+     * @since 1.0.0-SNAPSHOT
      */
     private void saveModels(String providerConfigId, List<SaveConfigRequest.ModelConfig> models) {
         if (models == null) {
@@ -304,7 +351,7 @@ public class SettingsServiceImpl implements SettingsService {
                     .createTime(System.currentTimeMillis())
                     .updateTime(System.currentTimeMillis())
                     .build();
-            modelConfigMapper.insert(config);
+            this.modelConfigMapper.insert(config);
         }
     }
 
@@ -315,6 +362,7 @@ public class SettingsServiceImpl implements SettingsService {
      *
      * @param apiKey 原始 API Key
      * @return 脱敏后的 API Key
+     * @since 1.0.0-SNAPSHOT
      */
     private String maskApiKey(String apiKey) {
         if (StrUtil.isBlank(apiKey)) {

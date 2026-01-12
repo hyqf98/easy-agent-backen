@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdGeneratorAssignt;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import io.github.hijun.agent.common.enums.McpTransportMode;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
  *
  * @author haijun
  * @version 3.4.3
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/01/11
  * @since 3.4.3
  */
@@ -50,6 +51,14 @@ public class McpServerConfig {
      */
     @TableField("server_url")
     private String serverUrl;
+
+    /**
+     * 传输模式
+     * <p>
+     * MCP 服务器的传输模式（SSE 或 HTTP_STREAM）
+     */
+    @TableField("transport_mode")
+    private McpTransportMode transportMode;
 
     /**
      * 是否启用

@@ -9,7 +9,7 @@ import lombok.Getter;
  * @author haijun
  * @version 3.4.3
  * @date 2025-12-24
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @since 3.4.3
  */
 @Getter

@@ -18,7 +18,7 @@ import java.lang.reflect.Method;
  * @param <T> t
  * @author haijun
  * @version 1.0.0-SNAPSHOT
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/1/8 16:45
  * @since 1.0.0-SNAPSHOT
  */
@@ -42,7 +42,7 @@ public class CodeEnumDeserializer<T extends Enum<?>> extends JsonDeserializer<T>
      *
      * @param targetType target type
      * @since 1.0.0-SNAPSHOT
-     */ // 2.以此构造函数创建包含类型信息的实例
+     */
     public CodeEnumDeserializer(JavaType targetType) {
         this.targetType = targetType;
     }

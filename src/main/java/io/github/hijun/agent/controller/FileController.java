@@ -23,7 +23,7 @@ import java.nio.file.Paths;
  *
  * @author haijun
  * @version 1.0.0
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/1/7 10:15
  * @since 1.0.0
  */

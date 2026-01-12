@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
  * Code Enum Serializer
  *
  * @author haijun
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/1/8 16:46
  * @version 1.0.0-SNAPSHOT
  * @since 1.0.0-SNAPSHOT

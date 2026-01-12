@@ -8,7 +8,7 @@ import org.springframework.ai.chat.client.ChatClient;
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/1/9 16:44
  * @since 1.0.0-SNAPSHOT
  */

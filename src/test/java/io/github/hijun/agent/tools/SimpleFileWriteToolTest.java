@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/1/7 15:36
  * @since 1.0.0-SNAPSHOT
  */

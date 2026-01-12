@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
  *
  * @author haijun
  * @version 3.4.3
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/01/11
  * @since 3.4.3
  */
@@ -44,39 +44,39 @@ public class ChatClientFactoryImpl implements ChatClientFactory {
 
     @Override
     public ChatClient createChatClient(String providerConfigId, String modelId) {
-        ChatModel chatModel = createChatModel(providerConfigId, modelId);
+        ChatModel chatModel = this.createChatModel(providerConfigId, modelId);
         return ChatClient.builder(chatModel).build();
     }
 
     @Override
     public ChatClient createChatClient(ModelProviderConfig config, String modelId) {
-        ChatModel chatModel = createChatModel(config, modelId);
+        ChatModel chatModel = this.createChatModel(config, modelId);
         return ChatClient.builder(chatModel).build();
     }
 
     @Override
     public ChatClient createChatClient(ModelProvider providerType, String apiKey, String baseUrl, String modelId) {
-        ChatModel chatModel = createChatModel(providerType, apiKey, baseUrl, modelId);
+        ChatModel chatModel = this.createChatModel(providerType, apiKey, baseUrl, modelId);
         return ChatClient.builder(chatModel).build();
     }
 
     @Override
     public ChatModel createChatModel(String providerConfigId, String modelId) {
-        ModelProviderConfig config = modelProviderConfigMapper.selectById(providerConfigId);
+        ModelProviderConfig config = this.modelProviderConfigMapper.selectById(providerConfigId);
         if (config == null) {
             throw new IllegalArgumentException("Model provider config not found: " + providerConfigId);
         }
-        return createChatModel(config, modelId);
+        return this.createChatModel(config, modelId);
     }
 
     @Override
     public ChatModel createChatModel(ModelProviderConfig config, String modelId) {
-        return createChatModel(config.getProviderType(), config.getApiKey(), config.getBaseUrl(), modelId);
+        return this.createChatModel(config.getProviderType(), config.getApiKey(), config.getBaseUrl(), modelId);
     }
 
     @Override
     public ChatModel createChatModel(ModelProvider providerType, String apiKey, String baseUrl, String modelId) {
-        String resolvedBaseUrl = resolveBaseUrl(providerType, baseUrl);
+        String resolvedBaseUrl = this.resolveBaseUrl(providerType, baseUrl);
 
         log.debug("Creating ChatModel: provider={}, model={}, baseUrl={}",
                 providerType, modelId, resolvedBaseUrl);

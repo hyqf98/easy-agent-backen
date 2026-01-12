@@ -12,7 +12,7 @@ import org.springframework.ai.chat.model.ChatModel;
  *
  * @author haijun
  * @version 3.4.3
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/01/11
  * @since 3.4.3
  */

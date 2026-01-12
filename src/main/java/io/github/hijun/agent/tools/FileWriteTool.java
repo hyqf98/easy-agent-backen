@@ -18,7 +18,7 @@ import java.nio.file.Paths;
  *
  * @author haijun
  * @version 1.0.0
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/1/7 10:00
  * @since 1.0.0
  */
@@ -43,7 +43,7 @@ public class FileWriteTool {
      *
      * @author haijun
      * @version 1.0.0-SNAPSHOT
-     * @email "mailto:haijun@email.com"
+     * @email "mailto:iamxiaohaijun@gmail.com"
      * @date 2026/1/7 15:16
      * @since 1.0.0-SNAPSHOT
      */

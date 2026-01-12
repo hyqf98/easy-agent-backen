@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/1/5 15:44
  * @since 1.0.0-SNAPSHOT
  */
@@ -36,7 +36,7 @@ public class SystemPromptProperties {
      * Agent Config
      *
      * @author haijun
-     * @email "mailto:haijun@email.com"
+     * @email "mailto:iamxiaohaijun@gmail.com"
      * @date 2026/1/5 15:47
      * @version 1.0.0-SNAPSHOT
      * @since 1.0.0-SNAPSHOT

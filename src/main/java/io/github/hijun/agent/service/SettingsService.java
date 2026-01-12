@@ -1,6 +1,8 @@
 package io.github.hijun.agent.service;
 
-import io.github.hijun.agent.entity.dto.*;
+import io.github.hijun.agent.entity.dto.ProviderInfoDTO;
+import io.github.hijun.agent.entity.dto.SettingsConfigDTO;
+import io.github.hijun.agent.entity.dto.TestModelResultDTO;
 import io.github.hijun.agent.entity.req.SaveConfigRequest;
 import io.github.hijun.agent.entity.req.TestModelRequest;
 
@@ -13,7 +15,7 @@ import java.util.List;
  *
  * @author haijun
  * @version 3.4.3
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/01/11
  * @since 3.4.3
  */

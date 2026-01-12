@@ -10,7 +10,7 @@ import lombok.Getter;
  *
  * @author haijun
  * @version 3.4.3
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/01/11
  * @since 3.4.3
  */
@@ -19,67 +19,60 @@ import lombok.Getter;
 public enum ModelProvider {
 
     /**
-     * OpenAI 提供商
-     * <p>
-     * 支持 GPT-4、GPT-3.5 等模型
-     */
-    OPENAI("openai", "OpenAI", true, true, new String[]{"gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"}),
-
-    /**
      * Anthropic 提供商
      * <p>
      * 支持 Claude 3 Opus/Sonnet/Haiku 等模型
      */
-    ANTHROPIC("anthropic", "Anthropic", true, false, new String[]{"claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"}),
+    ANTHROPIC("anthropic", "Anthropic", true, false, new String[]{"claude-3-5-sonnet-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"}),
 
     /**
-     * Google 提供商
+     * Azure OpenAI 提供商
      * <p>
-     * 支持 Gemini Pro 等模型
+     * 微软Azure托管的OpenAI服务
      */
-    GOOGLE("google", "Google", true, true, new String[]{"gemini-pro", "gemini-pro-vision"}),
+    AZURE_OPENAI("azure_openai", "Azure OpenAI", true, true, new String[]{"gpt-4", "gpt-35-turbo"}),
 
     /**
-     * 百度 提供商
+     * HuggingFace 提供商
      * <p>
-     * 支持文心一言 ERNIE-Bot 等模型
+     * 使用 HuggingFace 的推理 API（兼容 OpenAI API）
      */
-    BAIDU("baidu", "百度", true, false, new String[]{"ernie-bot-4", "ernie-bot-turbo"}),
+    HUGGINGFACE("huggingface", "HuggingFace", true, true, new String[]{"meta-llama/Llama-3.2-3B-Instruct", "mistralai/Mistral-7B-Instruct-v0.2"}),
 
     /**
-     * 阿里 提供商
+     * MiniMax 提供商
      * <p>
-     * 支持通义千问 Qwen 等模型
+     * 支持 MiniMax 系列 AI 模型
      */
-    ALIBABA("alibaba", "阿里", true, false, new String[]{"qwen-max", "qwen-plus", "qwen-turbo"}),
+    MINIMAX("minimax", "MiniMax", true, true, new String[]{"abab6.5s-chat", "abab5.5-chat"}),
 
     /**
-     * 智谱 提供商
-     * <p>
-     * 支持 ChatGLM 等模型
-     */
-    ZHIPU("zhipu", "智谱", true, false, new String[]{"glm-4", "glm-3-turbo"}),
-
-    /**
-     * Moonshot 提供商
+     * Moonshot AI 提供商
      * <p>
      * 支持 Moonshot-v1 等模型
      */
-    MOONSHOT("moonshot", "Moonshot", true, true, new String[]{"moonshot-v1-128k", "moonshot-v1-32k"}),
+    MOONSHOT("moonshot", "Moonshot AI", true, true, new String[]{"moonshot-v1-128k", "moonshot-v1-32k", "moonshot-v1-8k"}),
 
     /**
-     * DeepSeek 提供商
+     * Ollama 提供商
      * <p>
-     * 支持 DeepSeek-Chat、DeepSeek-Coder 等模型
+     * 本地部署的开源模型，支持 Llama、Mistral 等
      */
-    DEEPSEEK("deepseek", "DeepSeek", true, true, new String[]{"deepseek-chat", "deepseek-coder"}),
+    OLLAMA("ollama", "Ollama", false, true, new String[]{"llama3.2", "mistral", "qwen2", "gemma2"}),
 
     /**
-     * 字节 提供商
+     * OpenAI 提供商
      * <p>
-     * 支持豆包 Doubao 等模型
+     * 支持 GPT-4、GPT-3.5 等模型
      */
-    BYTEDANCE("bytedance", "字节", true, false, new String[]{"doubao-pro", "doubao-lite"});
+    OPENAI("openai", "OpenAI", true, true, new String[]{"gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"}),
+
+    /**
+     * ZhiPu AI 提供商
+     * <p>
+     * 支持 ChatGLM 等模型
+     */
+    ZHIPU("zhipu", "ZhiPu AI", true, true, new String[]{"glm-4", "glm-4-plus", "glm-4-flash", "glm-3-turbo"});
 
     /**
      * 提供商代码
@@ -123,7 +116,7 @@ public enum ModelProvider {
      *
      * @param code 提供商代码
      * @return 对应的枚举实例
-     * @throws IllegalArgumentException 如果代码不匹配任何提供商
+     * @since 1.0.0-SNAPSHOT
      */
     public static ModelProvider fromCode(String code) {
         for (ModelProvider provider : values()) {

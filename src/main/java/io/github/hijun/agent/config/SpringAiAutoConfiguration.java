@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * @author haijun
  * @version 3.4.3
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2025/12/24 17:32
  * @since 3.4.3
  */

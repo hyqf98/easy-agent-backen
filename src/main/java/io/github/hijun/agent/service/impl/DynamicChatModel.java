@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author haijun
  * @version 3.4.3
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/01/11
  * @since 3.4.3
  */
@@ -87,34 +87,34 @@ public class DynamicChatModel implements ChatModel {
     private ChatModel getChatModel() {
         ModelConfig config = CURRENT_MODEL_CONFIG.get();
         if (config == null || config.providerConfigId() == null) {
-            return defaultChatModel;
+            return this.defaultChatModel;
         }
 
         String cacheKey = config.providerConfigId() + ":" + config.modelId();
-        return chatModelCache.computeIfAbsent(cacheKey, key -> {
+        return this.chatModelCache.computeIfAbsent(cacheKey, key -> {
             try {
-                return chatClientFactory.createChatModel(config.providerConfigId(), config.modelId());
+                return this.chatClientFactory.createChatModel(config.providerConfigId(), config.modelId());
             } catch (Exception e) {
                 log.error("Failed to create ChatModel for provider: {}, model: {}",
                         config.providerConfigId(), config.modelId(), e);
-                return defaultChatModel;
+                return this.defaultChatModel;
             }
         });
     }
 
     @Override
     public ChatResponse call(Prompt prompt) {
-        return getChatModel().call(prompt);
+        return this.getChatModel().call(prompt);
     }
 
     @Override
     public Flux<ChatResponse> stream(Prompt prompt) {
-        return getChatModel().stream(prompt);
+        return this.getChatModel().stream(prompt);
     }
 
     @Override
     public ChatOptions getDefaultOptions() {
-        return getChatModel().getDefaultOptions();
+        return this.getChatModel().getDefaultOptions();
     }
 
     /**

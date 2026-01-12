@@ -7,7 +7,7 @@ import lombok.Getter;
  * Chat Mode
  *
  * @author haijun
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2025/12/24 16:51
  * @version 3.4.3
  * @since 3.4.3

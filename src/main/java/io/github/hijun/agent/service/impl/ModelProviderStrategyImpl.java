@@ -1,10 +1,9 @@
 package io.github.hijun.agent.service.impl;
 
 import cn.hutool.core.util.StrUtil;
-import io.github.hijun.agent.common.enums.ModelProvider;
 import io.github.hijun.agent.entity.req.TestModelRequest;
-import io.github.hijun.agent.service.ModelProviderStrategy;
 import io.github.hijun.agent.service.ChatClientFactory;
+import io.github.hijun.agent.service.ModelProviderStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -17,7 +16,7 @@ import org.springframework.stereotype.Service;
  *
  * @author haijun
  * @version 3.4.3
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/01/11
  * @since 3.4.3
  */
@@ -52,7 +51,7 @@ public class ModelProviderStrategyImpl implements ModelProviderStrategy {
             case ZHIPU:
             case BYTEDANCE:
                 // 所有提供商统一使用 OpenAI 兼容模式测试
-                testOpenAiCompatible(request);
+                this.testOpenAiCompatible(request);
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported provider: " + request.getProviderType());
@@ -87,7 +86,7 @@ public class ModelProviderStrategyImpl implements ModelProviderStrategy {
 
         try {
             // 使用 ChatClientFactory 创建临时的 ChatClient 进行测试
-            ChatClient testClient = chatClientFactory.createChatClient(
+            ChatClient testClient = this.chatClientFactory.createChatClient(
                     request.getProviderType(),
                     request.getApiKey(),
                     baseUrl,

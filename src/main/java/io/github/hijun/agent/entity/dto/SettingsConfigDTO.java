@@ -14,7 +14,7 @@ import java.util.List;
  *
  * @author haijun
  * @version 3.4.3
- * @email "mailto:haijun@email.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/01/11
  * @since 3.4.3
  */
@@ -76,6 +76,13 @@ public class SettingsConfigDTO {
          * MCP 服务器的连接地址（URL）
          */
         private String url;
+
+        /**
+         * 传输模式
+         * <p>
+         * MCP 服务器的传输模式（sse 或 http_stream）
+         */
+        private String transportMode;
 
         /**
          * 是否启用
