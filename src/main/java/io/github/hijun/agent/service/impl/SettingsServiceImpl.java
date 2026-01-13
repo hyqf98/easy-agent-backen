@@ -21,7 +21,6 @@ import io.github.hijun.agent.service.ModelProviderStrategy;
 import io.github.hijun.agent.service.SettingsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -41,7 +40,6 @@ import java.util.stream.Stream;
  * @since 3.4.3
  */
 @Slf4j
-@Service
 @RequiredArgsConstructor
 public class SettingsServiceImpl implements SettingsService {
 
@@ -186,8 +184,8 @@ public class SettingsServiceImpl implements SettingsService {
                     .map(provider -> ProviderInfoDTO.builder()
                             .providerType(provider)
                             .name(provider.getName())
-                            .requireApiKey(provider.getRequireApiKey())
-                            .requireBaseUrl(provider.getRequireBaseUrl())
+                            .requireApiKey(null)
+                            .requireBaseUrl(null)
                             .defaultModels(List.of(provider.getDefaultModels()))
                             .build())
                     .collect(Collectors.toList());
@@ -259,8 +257,6 @@ public class SettingsServiceImpl implements SettingsService {
                         .transportMode(transportMode)
                         .enabled(server.getEnabled() != null ? server.getEnabled() : true)
                         .description(server.getDescription())
-                        .createTime(System.currentTimeMillis())
-                        .updateTime(System.currentTimeMillis())
                         .build();
                 this.mcpServerConfigMapper.insert(config);
             }
@@ -284,12 +280,10 @@ public class SettingsServiceImpl implements SettingsService {
                 if (StrUtil.isNotBlank(provider.getId())) {
                     // 更新现有配置
                     ModelProviderConfig config = ModelProviderConfig.builder()
-                            .id(provider.getId())
                             .providerType(provider.getProviderType())
                             .enabled(provider.getEnabled() != null ? provider.getEnabled() : true)
                             .apiKey(provider.getApiKey())
                             .baseUrl(provider.getBaseUrl())
-                            .updateTime(System.currentTimeMillis())
                             .build();
                     this.modelProviderConfigMapper.updateById(config);
 
@@ -310,14 +304,12 @@ public class SettingsServiceImpl implements SettingsService {
                             .enabled(provider.getEnabled() != null ? provider.getEnabled() : true)
                             .apiKey(provider.getApiKey())
                             .baseUrl(provider.getBaseUrl())
-                            .createTime(System.currentTimeMillis())
-                            .updateTime(System.currentTimeMillis())
                             .build();
                     this.modelProviderConfigMapper.insert(config);
 
                     // 添加模型
                     if (provider.getModels() != null) {
-                        this.saveModels(config.getId(), provider.getModels());
+                        this.saveModels("", provider.getModels());
                     }
                 }
             } catch (Exception e) {
@@ -348,8 +340,6 @@ public class SettingsServiceImpl implements SettingsService {
                     .modelName(model.getModelName())
                     .enabled(model.getEnabled() != null ? model.getEnabled() : true)
                     .description(model.getDescription())
-                    .createTime(System.currentTimeMillis())
-                    .updateTime(System.currentTimeMillis())
                     .build();
             this.modelConfigMapper.insert(config);
         }

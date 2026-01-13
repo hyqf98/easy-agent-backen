@@ -3,7 +3,7 @@ package io.github.hijun.agent.tools;
 import cn.hutool.core.io.FileUtil;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import io.github.hijun.agent.config.AgentProperties;
+import io.github.hijun.agent.config.ApplicationProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
@@ -36,7 +36,7 @@ public class FileWriteTool {
     /**
      * agent properties.
      */
-    private final AgentProperties agentProperties;
+    private final ApplicationProperties applicationProperties;
 
     /**
      * 文件写入参数记录
@@ -79,7 +79,7 @@ public class FileWriteTool {
             }
 
             // 使用绝对存储路径
-            String storagePath = this.agentProperties.getStoragePath();
+            String storagePath = this.applicationProperties.getStoragePath();
 
             // 构建完整的文件路径
             String fullPath = Paths.get(storagePath, fileName + "." + fileType).toString();

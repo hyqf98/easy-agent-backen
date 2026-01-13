@@ -2,29 +2,28 @@ package io.github.hijun.agent.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+
 
 /**
- * 文件配置属性
+ * System Prompt Config
  *
  * @author haijun
+ * @version 1.0.0-SNAPSHOT
  * @email "mailto:iamxiaohaijun@gmail.com"
- * @date 2026/1/7 11:00
- * @version 1.0.0
- * @since 1.0.0
+ * @date 2026/1/5 15:44
+ * @since 1.0.0-SNAPSHOT
  */
 @Data
-@Configuration
 @ConfigurationProperties(prefix = AgentProperties.PREFIX)
 public class AgentProperties {
 
     /**
-     * prefix.
+     * p r e f i x.
      */
-    public static final String PREFIX = "agent";
+    public static final String PREFIX = "agent.prompt";
 
     /**
-     * storage path.
+     * max step.
      */
-    private String storagePath;
+    private Integer maxStep;
 }

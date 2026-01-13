@@ -1,12 +1,12 @@
 package io.github.hijun.agent.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import io.github.hijun.agent.common.enums.AdditionalFeatures;
+import io.github.hijun.agent.entity.dto.ContentMessage;
 import io.github.hijun.agent.entity.po.AgentContext;
 import io.github.hijun.agent.entity.req.ChatRequest;
 import io.github.hijun.agent.service.ModelService;
-import io.github.hijun.agent.service.strategy.ReactAgent;
+import io.github.hijun.agent.service.strategy.MultiCollaborationAgent;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +41,7 @@ public class ModelServiceImpl implements ModelService, ApplicationContextAware {
     /**
      * Agent
      */
-    private final ReactAgent reactAgent;
+    private final MultiCollaborationAgent multiCollaborationAgent;
 
     /**
      * application context.
@@ -62,17 +62,9 @@ public class ModelServiceImpl implements ModelService, ApplicationContextAware {
         // 设置当前请求的模型配置（如果提供了）
         String modelProvider = chatRequest.getModelProvider();
         String modelId = chatRequest.getModelId();
-        if (StrUtil.isNotBlank(modelProvider) && StrUtil.isNotBlank(modelId)) {
-            DynamicChatModel.setCurrentModel(modelProvider, modelId);
-            log.debug("Set current model: provider={}, model={}", modelProvider, modelId);
-        }
 
         try {
             String userPrompt = chatRequest.getUserPrompt();
-            if (StrUtil.isNotBlank(userPrompt)) {
-                // 添加用户自定义的系统提示词
-            }
-
             ToolCallback[] toolCallbacks = this.getToolCallbacks(chatRequest);
             AgentContext agentContext = AgentContext.builder()
                     .sessionId(chatRequest.getSessionId())
@@ -85,17 +77,17 @@ public class ModelServiceImpl implements ModelService, ApplicationContextAware {
                     .toolCallbacks(Arrays.asList(toolCallbacks))
                     .build();
             CompletableFuture.runAsync(() -> {
-                try {
-                    this.reactAgent.run(agentContext);
-                } finally {
-                    // 清除当前请求的模型配置
-                    DynamicChatModel.clearCurrentModel();
-                }
+                agentContext.sendMessage(ContentMessage.builder().content("PING").build());
+                this.multiCollaborationAgent.run(agentContext);
+            });
+            sseEmitter.onCompletion(() -> {
+                log.info("SessionId: {}, RequestId: {} completed", agentContext.getSessionId(), agentContext.getRequestId());
+            });
+            sseEmitter.onTimeout(() -> {
+                log.info("SessionId: {}, RequestId: {} timeout", agentContext.getSessionId(), agentContext.getRequestId());
             });
             return sseEmitter;
         } catch (Exception e) {
-            // 发生异常时也要清除 ThreadLocal
-            DynamicChatModel.clearCurrentModel();
             throw e;
         }
     }

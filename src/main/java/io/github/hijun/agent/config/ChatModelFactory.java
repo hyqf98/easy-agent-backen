@@ -2,18 +2,7 @@ package io.github.hijun.agent.config;
 
 import io.github.hijun.agent.common.enums.ModelProvider;
 import io.github.hijun.agent.entity.po.ModelProviderConfig;
-import org.springframework.ai.anthropic.AnthropicChatModel;
-import org.springframework.ai.anthropic.AnthropicChatOptions;
-import org.springframework.ai.anthropic.api.AnthropicApi;
-import org.springframework.ai.azure.openai.AzureOpenAiChatModel;
-import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
-import org.springframework.ai.azure.openai.api.AzureOpenAiApi;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.ollama.OllamaChatModel;
-import org.springframework.ai.ollama.api.OllamaApi;
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.api.OpenAiApi;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -71,115 +60,12 @@ public class ChatModelFactory {
      */
     private ChatModel doCreateChatModel(ModelProviderConfig config) {
         return switch (config.getProviderType()) {
-            case ANTHROPIC -> this.createAnthropicChatModel(config);
-            case AZURE_OPENAI -> this.createAzureOpenAiChatModel(config);
-            case OLLAMA -> this.createOllamaChatModel(config);
-            case OPENAI, HUGGINGFACE, MINIMAX, MOONSHOT, ZHIPU -> this.createOpenAiCompatibleChatModel(config);
+            case ANTHROPIC -> null;
+            case AZURE_OPENAI -> null;
+            case OLLAMA -> null;
+            case OPENAI, HUGGINGFACE, MINIMAX, MOONSHOT, ZHIPU -> null;
             default -> throw new IllegalArgumentException("不支持的模型提供商: " + config.getProviderType());
         };
-    }
-
-    /**
-     * 创建Anthropic ChatModel
-     *
-     * @param config config
-     * @return chat model
-     * @since 1.0.0-SNAPSHOT
-     */
-    private ChatModel createAnthropicChatModel(ModelProviderConfig config) {
-        AnthropicApi anthropicApi = new AnthropicApi(config.getApiKey());
-
-        AnthropicChatOptions options = AnthropicChatOptions.builder()
-                .withModel(config.getModelName() != null ? config.getModelName() : "claude-3-5-sonnet-20241022")
-                .withTemperature(config.getTemperature())
-                .withMaxTokens(config.getMaxTokens())
-                .build();
-
-        return AnthropicChatModel.builder()
-                .anthropicApi(anthropicApi)
-                .defaultOptions(options)
-                .build();
-    }
-
-    /**
-     * 创建Azure OpenAI ChatModel
-     *
-     * @param config config
-     * @return chat model
-     * @since 1.0.0-SNAPSHOT
-     */
-    private ChatModel createAzureOpenAiChatModel(ModelProviderConfig config) {
-        String endpoint = config.getBaseUrl() != null
-                ? config.getBaseUrl()
-                : String.format("https://%s.openai.azure.com/", config.getAzureResourceName());
-
-        AzureOpenAiApi azureOpenAiApi = new AzureOpenAiApi(endpoint, config.getApiKey());
-
-        AzureOpenAiChatOptions options = AzureOpenAiChatOptions.builder()
-                .withDeployment(config.getAzureDeploymentName() != null
-                        ? config.getAzureDeploymentName()
-                        : config.getModelName())
-                .withTemperature(config.getTemperature())
-                .withMaxTokens(config.getMaxTokens())
-                .build();
-
-        return AzureOpenAiChatModel.builder()
-                .azureOpenAiApi(azureOpenAiApi)
-                .defaultOptions(options)
-                .build();
-    }
-
-    /**
-     * 创建Ollama ChatModel
-     *
-     * @param config config
-     * @return chat model
-     * @since 1.0.0-SNAPSHOT
-     */
-    private ChatModel createOllamaChatModel(ModelProviderConfig config) {
-        String baseUrl = config.getBaseUrl() != null ? config.getBaseUrl() : "http://localhost:11434";
-        OllamaApi ollamaApi = new OllamaApi(baseUrl);
-
-        return OllamaChatModel.builder()
-                .ollamaApi(ollamaApi)
-                .model(config.getModelName() != null ? config.getModelName() : "llama3.2")
-                .temperature(config.getTemperature().floatValue())
-                .build();
-    }
-
-    /**
-     * 创建OpenAI兼容的ChatModel
-     * <p>
-     * 用于支持使用OpenAI API兼容接口的提供商，如：
-     * - OpenAI
-     * - HuggingFace
-     * - MiniMax
-     * - Moonshot
-     * - ZhiPu
-     *
-     * @param config config
-     * @return chat model
-     * @since 1.0.0-SNAPSHOT
-     */
-    private ChatModel createOpenAiCompatibleChatModel(ModelProviderConfig config) {
-        String baseUrl = config.getBaseUrl();
-        if (baseUrl == null) {
-            // 使用默认的 Base URL
-            baseUrl = this.getDefaultBaseUrl(config.getProviderType());
-        }
-
-        OpenAiApi openAiApi = new OpenAiApi(baseUrl, config.getApiKey());
-
-        OpenAiChatOptions options = OpenAiChatOptions.builder()
-                .withModel(config.getModelName() != null ? config.getModelName() : this.getDefaultModel(config.getProviderType()))
-                .withTemperature(config.getTemperature())
-                .withMaxTokens(config.getMaxTokens())
-                .build();
-
-        return OpenAiChatModel.builder()
-                .openAiApi(openAiApi)
-                .defaultOptions(options)
-                .build();
     }
 
     /**

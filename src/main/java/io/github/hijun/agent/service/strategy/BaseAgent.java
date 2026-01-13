@@ -38,11 +38,6 @@ public abstract class BaseAgent extends BaseLLM<AgentContext> {
     private static final Integer MAX_TOOL_CALL_DEPTH = 30;
 
     /**
-     * max step.
-     */
-    private Integer maxStep;
-
-    /**
      * React Agent
      *
      * @param chatClient chat client

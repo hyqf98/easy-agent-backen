@@ -1,6 +1,6 @@
 package io.github.hijun.agent.controller;
 
-import io.github.hijun.agent.config.AgentProperties;
+import io.github.hijun.agent.config.ApplicationProperties;
 import io.github.hijun.agent.tools.FileWriteTool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +36,7 @@ public class FileController {
     /**
      * agent properties.
      */
-    private final AgentProperties agentProperties;
+    private final ApplicationProperties applicationProperties;
 
     /**
      * 访问文件
@@ -49,7 +49,7 @@ public class FileController {
     public ResponseEntity<Resource> getFile(@PathVariable String filePath) {
         try {
             // 使用绝对存储路径
-            String storagePath = this.agentProperties.getStoragePath();
+            String storagePath = this.applicationProperties.getStoragePath();
             // 构建安全的文件路径
             String fullPath = Paths.get(storagePath, filePath).toString();
             File file = new File(fullPath);

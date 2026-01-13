@@ -2,9 +2,10 @@ package io.github.hijun.agent.entity.dto;
 
 import io.github.hijun.agent.common.enums.ModelProvider;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
@@ -19,18 +20,13 @@ import java.util.List;
  * @date 2026/01/11
  * @since 3.4.3
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ModelProviderDTO {
+public class ModelProviderDTO extends BaseDTO {
 
-    /**
-     * 配置ID
-     * <p>
-     * 模型提供商配置的唯一标识符
-     */
-    private String id;
 
     /**
      * 提供商类型

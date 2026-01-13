@@ -3,7 +3,9 @@ package io.github.hijun.agent.entity.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 
@@ -49,19 +51,18 @@ public class SettingsConfigDTO {
      * MCP 服务器配置 DTO
      * <p>
      * 表示单个 MCP 服务器的配置信息
+     *
+     * @author haijun
+     * @email "mailto:iamxiaohaijun@gmail.com"
+     * @date 2026/1/13 17:15
+     * @version 1.0.0-SNAPSHOT
+     * @since 1.0.0-SNAPSHOT
      */
+    @EqualsAndHashCode(callSuper = true)
     @Data
-    @Builder
+    @SuperBuilder
     @NoArgsConstructor
-    @AllArgsConstructor
-    public static class McpServerDTO {
-
-        /**
-         * 服务器ID
-         * <p>
-         * MCP 服务器配置的唯一标识符
-         */
-        private String id;
+    public static class McpServerDTO extends BaseDTO {
 
         /**
          * 服务器名称
@@ -103,12 +104,19 @@ public class SettingsConfigDTO {
      * 选中的模型 DTO
      * <p>
      * 表示用户当前选择的模型配置
+     *
+     * @author haijun
+     * @email "mailto:iamxiaohaijun@gmail.com"
+     * @date 2026/1/13 17:15
+     * @version 1.0.0-SNAPSHOT
+     * @since 1.0.0-SNAPSHOT
      */
+    @EqualsAndHashCode(callSuper = true)
     @Data
-    @Builder
+    @SuperBuilder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SelectedModelDTO {
+    public static class SelectedModelDTO extends BaseDTO {
 
         /**
          * 提供商配置ID

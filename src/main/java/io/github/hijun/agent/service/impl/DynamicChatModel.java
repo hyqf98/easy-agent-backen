@@ -52,29 +52,14 @@ public class DynamicChatModel implements ChatModel {
     /**
      * 构造函数
      *
-     * @param defaultChatModel   默认 ChatModel
-     * @param chatClientFactory  ChatClient 工厂
+     * @param defaultChatModel  默认 ChatModel
+     * @param chatClientFactory ChatClient 工厂
+     * @since 1.0.0-SNAPSHOT
      */
-    public DynamicChatModel(ChatModel defaultChatModel, ChatClientFactory chatClientFactory) {
+    public DynamicChatModel(ChatModel defaultChatModel,
+                            ChatClientFactory chatClientFactory) {
         this.defaultChatModel = defaultChatModel;
         this.chatClientFactory = chatClientFactory;
-    }
-
-    /**
-     * 设置当前请求的模型配置
-     *
-     * @param providerConfigId 提供商配置ID
-     * @param modelId          模型ID
-     */
-    public static void setCurrentModel(String providerConfigId, String modelId) {
-        CURRENT_MODEL_CONFIG.set(new ModelConfig(providerConfigId, modelId));
-    }
-
-    /**
-     * 清除当前请求的模型配置
-     */
-    public static void clearCurrentModel() {
-        CURRENT_MODEL_CONFIG.remove();
     }
 
     /**
@@ -83,6 +68,7 @@ public class DynamicChatModel implements ChatModel {
      * 如果 ThreadLocal 中有配置，则使用对应的模型；否则使用默认模型
      *
      * @return ChatModel
+     * @since 1.0.0-SNAPSHOT
      */
     private ChatModel getChatModel() {
         ModelConfig config = CURRENT_MODEL_CONFIG.get();
@@ -102,16 +88,36 @@ public class DynamicChatModel implements ChatModel {
         });
     }
 
+    /**
+     * Call
+     *
+     * @param prompt prompt
+     * @return chat response
+     * @since 1.0.0-SNAPSHOT
+     */
     @Override
     public ChatResponse call(Prompt prompt) {
         return this.getChatModel().call(prompt);
     }
 
+    /**
+     * Stream
+     *
+     * @param prompt prompt
+     * @return flux
+     * @since 1.0.0-SNAPSHOT
+     */
     @Override
     public Flux<ChatResponse> stream(Prompt prompt) {
         return this.getChatModel().stream(prompt);
     }
 
+    /**
+     * Get Default Options
+     *
+     * @return chat options
+     * @since 1.0.0-SNAPSHOT
+     */
     @Override
     public ChatOptions getDefaultOptions() {
         return this.getChatModel().getDefaultOptions();
@@ -122,6 +128,11 @@ public class DynamicChatModel implements ChatModel {
      *
      * @param providerConfigId 提供商配置ID
      * @param modelId          模型ID
+     * @author haijun
+     * @email "mailto:iamxiaohaijun@gmail.com"
+     * @date 2026/1/13 17:08
+     * @version 1.0.0-SNAPSHOT
+     * @since 1.0.0-SNAPSHOT
      */
     private record ModelConfig(String providerConfigId, String modelId) {
     }

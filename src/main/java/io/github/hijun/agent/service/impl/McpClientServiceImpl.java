@@ -1,6 +1,5 @@
 package io.github.hijun.agent.service.impl;
 
-import cn.hutool.core.util.StrUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.hijun.agent.common.enums.McpTransportMode;
 import io.github.hijun.agent.entity.dto.McpServerInfoDTO;
@@ -9,8 +8,6 @@ import io.github.hijun.agent.entity.dto.TestMcpServerDTO;
 import io.github.hijun.agent.service.McpClientService;
 import io.github.hijun.agent.utils.JSONS;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -26,26 +23,43 @@ import java.util.List;
  * @version 3.4.3
  * @date 2026/01/12
  * @since 3.4.3
+ * @email "mailto:iamxiaohaijun@gmail.com"
  */
 @Slf4j
 @Service
 public class McpClientServiceImpl implements McpClientService {
 
+    /**
+     * rest client builder.
+     */
     private final RestClient.Builder restClientBuilder;
 
+    /**
+     * Mcp Client Service Impl
+     *
+     * @param restClientBuilder rest client builder
+     * @since 1.0.0-SNAPSHOT
+     */
     public McpClientServiceImpl(RestClient.Builder restClientBuilder) {
         this.restClientBuilder = restClientBuilder;
     }
 
+    /**
+     * Test Connection
+     *
+     * @param request request
+     * @return mcp test result d t o
+     * @since 1.0.0-SNAPSHOT
+     */
     @Override
     public McpTestResultDTO testConnection(TestMcpServerDTO request) {
         long startTime = System.currentTimeMillis();
         try {
-            log.info("Testing MCP server connection: url={}, transportMode={}", 
+            log.info("Testing MCP server connection: url={}, transportMode={}",
                     request.getUrl(), request.getTransportMode());
 
             // 获取服务器信息
-            McpServerInfoDTO serverInfo = getServerInfo(request.getUrl(), request.getTransportMode());
+            McpServerInfoDTO serverInfo = this.getServerInfo(request.getUrl(), request.getTransportMode());
 
             long latency = System.currentTimeMillis() - startTime;
 
@@ -67,15 +81,23 @@ public class McpClientServiceImpl implements McpClientService {
         }
     }
 
+    /**
+     * Get Server Info
+     *
+     * @param serverUrl server url
+     * @param transportMode transport mode
+     * @return mcp server info d t o
+     * @since 1.0.0-SNAPSHOT
+     */
     @Override
     public McpServerInfoDTO getServerInfo(String serverUrl, String transportMode) {
         try {
             McpTransportMode mode = McpTransportMode.fromCode(transportMode);
 
             if (mode == McpTransportMode.SSE) {
-                return getSSEServerInfo(serverUrl);
+                return this.getSSEServerInfo(serverUrl);
             } else if (mode == McpTransportMode.HTTP_STREAM) {
-                return getHttpStreamServerInfo(serverUrl);
+                return this.getHttpStreamServerInfo(serverUrl);
             } else {
                 throw new IllegalArgumentException("Unsupported transport mode: " + transportMode);
             }
@@ -87,12 +109,17 @@ public class McpClientServiceImpl implements McpClientService {
 
     /**
      * 获取 SSE 传输模式的服务器信息
+     *
+     * @param serverUrl server url
+     * @return mcp server info d t o
+     * @throws Exception
+     * @since 1.0.0-SNAPSHOT
      */
     private McpServerInfoDTO getSSEServerInfo(String serverUrl) throws Exception {
-        String baseUrl = normalizeBaseUrl(serverUrl);
+        String baseUrl = this.normalizeBaseUrl(serverUrl);
 
         // 发送 initialize 请求
-        JsonNode initResponse = sendMcpRequest(baseUrl, "initialize", 
+        JsonNode initResponse = this.sendMcpRequest(baseUrl, "initialize",
                 JSONS.getObjectMapper().createObjectNode());
 
         // 获取服务器信息
@@ -114,19 +141,19 @@ public class McpClientServiceImpl implements McpClientService {
         // 获取工具列表
         List<McpServerInfoDTO.ToolInfo> tools = new ArrayList<>();
         if (Boolean.TRUE.equals(serverCapabilities.getTools())) {
-            tools = fetchTools(baseUrl);
+            tools = this.fetchTools(baseUrl);
         }
 
         // 获取资源列表
         List<McpServerInfoDTO.ResourceInfo> resources = new ArrayList<>();
         if (Boolean.TRUE.equals(serverCapabilities.getResources())) {
-            resources = fetchResources(baseUrl);
+            resources = this.fetchResources(baseUrl);
         }
 
         // 获取提示词列表
         List<McpServerInfoDTO.PromptInfo> prompts = new ArrayList<>();
         if (Boolean.TRUE.equals(serverCapabilities.getPrompts())) {
-            prompts = fetchPrompts(baseUrl);
+            prompts = this.fetchPrompts(baseUrl);
         }
 
         return McpServerInfoDTO.builder()
@@ -142,12 +169,17 @@ public class McpClientServiceImpl implements McpClientService {
 
     /**
      * 获取 HTTP Stream 传输模式的服务器信息
+     *
+     * @param serverUrl server url
+     * @return mcp server info d t o
+     * @throws Exception
+     * @since 1.0.0-SNAPSHOT
      */
     private McpServerInfoDTO getHttpStreamServerInfo(String serverUrl) throws Exception {
-        String baseUrl = normalizeBaseUrl(serverUrl);
+        String baseUrl = this.normalizeBaseUrl(serverUrl);
 
         // 发送 initialize 请求
-        JsonNode initResponse = sendMcpRequest(baseUrl, "initialize", 
+        JsonNode initResponse = this.sendMcpRequest(baseUrl, "initialize",
                 JSONS.getObjectMapper().createObjectNode());
 
         // 获取服务器信息（与 SSE 模式相同）
@@ -169,19 +201,19 @@ public class McpClientServiceImpl implements McpClientService {
         // 获取工具列表
         List<McpServerInfoDTO.ToolInfo> tools = new ArrayList<>();
         if (Boolean.TRUE.equals(serverCapabilities.getTools())) {
-            tools = fetchTools(baseUrl);
+            tools = this.fetchTools(baseUrl);
         }
 
         // 获取资源列表
         List<McpServerInfoDTO.ResourceInfo> resources = new ArrayList<>();
         if (Boolean.TRUE.equals(serverCapabilities.getResources())) {
-            resources = fetchResources(baseUrl);
+            resources = this.fetchResources(baseUrl);
         }
 
         // 获取提示词列表
         List<McpServerInfoDTO.PromptInfo> prompts = new ArrayList<>();
         if (Boolean.TRUE.equals(serverCapabilities.getPrompts())) {
-            prompts = fetchPrompts(baseUrl);
+            prompts = this.fetchPrompts(baseUrl);
         }
 
         return McpServerInfoDTO.builder()
@@ -197,34 +229,32 @@ public class McpClientServiceImpl implements McpClientService {
 
     /**
      * 发送 MCP 请求
+     *
+     * @param baseUrl base url
+     * @param method method
+     * @param params params
+     * @return json node
+     * @throws Exception
+     * @since 1.0.0-SNAPSHOT
      */
     private JsonNode sendMcpRequest(String baseUrl, String method, JsonNode params) throws Exception {
-        RestClient client = restClientBuilder
+        RestClient client = this.restClientBuilder
                 .baseUrl(baseUrl)
                 .build();
 
-        String requestBody = JSONS.getObjectMapper().createObjectNode()
-                .put("jsonrpc", "2.0")
-                .put("id", 1)
-                .put("method", method)
-                .set("params", params)
-                .toJSON();
-
-        ResponseEntity<String> response = client.post()
-                .uri("/")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(requestBody)
-                .retrieve()
-                .toEntity(String.class);
-
-        return JSONS.getObjectMapper().readTree(response.getBody());
+        return null;
     }
 
     /**
      * 获取工具列表
+     *
+     * @param baseUrl base url
+     * @return list
+     * @throws Exception
+     * @since 1.0.0-SNAPSHOT
      */
     private List<McpServerInfoDTO.ToolInfo> fetchTools(String baseUrl) throws Exception {
-        JsonNode response = sendMcpRequest(baseUrl, "tools/list", 
+        JsonNode response = this.sendMcpRequest(baseUrl, "tools/list",
                 JSONS.getObjectMapper().createObjectNode());
 
         List<McpServerInfoDTO.ToolInfo> tools = new ArrayList<>();
@@ -234,7 +264,7 @@ public class McpClientServiceImpl implements McpClientService {
                 tools.add(McpServerInfoDTO.ToolInfo.builder()
                         .name(toolNode.path("name").asText())
                         .description(toolNode.path("description").asText())
-                        .inputSchema(toolNode.has("inputSchema") ? 
+                        .inputSchema(toolNode.has("inputSchema") ?
                                 JSONS.getObjectMapper().readTree(toolNode.path("inputSchema").toString()) : null)
                         .build());
             }
@@ -244,9 +274,14 @@ public class McpClientServiceImpl implements McpClientService {
 
     /**
      * 获取资源列表
+     *
+     * @param baseUrl base url
+     * @return list
+     * @throws Exception
+     * @since 1.0.0-SNAPSHOT
      */
     private List<McpServerInfoDTO.ResourceInfo> fetchResources(String baseUrl) throws Exception {
-        JsonNode response = sendMcpRequest(baseUrl, "resources/list", 
+        JsonNode response = this.sendMcpRequest(baseUrl, "resources/list",
                 JSONS.getObjectMapper().createObjectNode());
 
         List<McpServerInfoDTO.ResourceInfo> resources = new ArrayList<>();
@@ -266,9 +301,14 @@ public class McpClientServiceImpl implements McpClientService {
 
     /**
      * 获取提示词列表
+     *
+     * @param baseUrl base url
+     * @return list
+     * @throws Exception
+     * @since 1.0.0-SNAPSHOT
      */
     private List<McpServerInfoDTO.PromptInfo> fetchPrompts(String baseUrl) throws Exception {
-        JsonNode response = sendMcpRequest(baseUrl, "prompts/list", 
+        JsonNode response = this.sendMcpRequest(baseUrl, "prompts/list",
                 JSONS.getObjectMapper().createObjectNode());
 
         List<McpServerInfoDTO.PromptInfo> prompts = new ArrayList<>();
@@ -299,6 +339,10 @@ public class McpClientServiceImpl implements McpClientService {
 
     /**
      * 规范化基础 URL
+     *
+     * @param url url
+     * @return string
+     * @since 1.0.0-SNAPSHOT
      */
     private String normalizeBaseUrl(String url) {
         String normalized = url.trim();

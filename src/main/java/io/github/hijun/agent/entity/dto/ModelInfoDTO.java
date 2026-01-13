@@ -1,9 +1,10 @@
 package io.github.hijun.agent.entity.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 /**
  * 模型信息 DTO
@@ -16,18 +17,13 @@ import lombok.NoArgsConstructor;
  * @date 2026/01/11
  * @since 3.4.3
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ModelInfoDTO {
+public class ModelInfoDTO extends BaseDTO {
 
-    /**
-     * 模型配置ID
-     * <p>
-     * 模型配置的唯一标识符
-     */
-    private String id;
 
     /**
      * 模型名称

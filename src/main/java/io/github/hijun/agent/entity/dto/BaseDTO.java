@@ -1,6 +1,9 @@
 package io.github.hijun.agent.entity.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 
@@ -12,16 +15,24 @@ import java.io.Serializable;
  * @author haijun
  * @version 3.4.3
  * @date 2026/01/12
+ * @email "mailto:iamxiaohaijun@gmail.com"
+ * @since 1.0.0-SNAPSHOT
  */
 @Data
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public abstract class BaseDTO implements Serializable {
 
+    /**
+     * serial version u i d.
+     */
     private static final long serialVersionUID = 1L;
 
     /**
      * 主键ID
      */
-    private String id;
+    private Long id;
 
     /**
      * 创建时间

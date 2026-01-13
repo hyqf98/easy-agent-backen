@@ -2,7 +2,6 @@ package io.github.hijun.agent.entity.req;
 
 import io.github.hijun.agent.common.enums.AdditionalFeatures;
 import io.github.hijun.agent.common.enums.ChatMode;
-import io.github.hijun.agent.common.enums.ModelProvider;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -65,9 +64,4 @@ public class ChatRequest {
      * 模型ID
      */
     private String modelId;
-
-    /**
-     * 模型提供商类型（可选，用于快速识别）
-     */
-    private ModelProvider providerType;
 }

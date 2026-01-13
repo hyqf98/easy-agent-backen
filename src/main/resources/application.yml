@@ -10,12 +10,12 @@ spring:
           model: Qwen3-Coder-30b-A3B-Instruct
       base-url: http://192.168.3.10:10000
       api-key: 123
-  config:
-    import: classpath:application_prompt.yml
   datasource:
-    url: mysql://192.168.3.10:3306/easy-agent?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://192.168.3.10:3306/easy-agent?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false
     username: zhxx
     password: zhxx@1234456
 agent:
   file:
-    storage-path: /Users/haijun/Work/my-work/easy-agent/files/
+    storage-path: /Users/haijun/Work/my-work/easy-agent/easy-agent-backen/files/
+  prompt:
+    max-step: 30

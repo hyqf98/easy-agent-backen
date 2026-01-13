@@ -9,6 +9,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
@@ -35,58 +38,54 @@ import java.util.List;
 public class AgentContext {
 
     /**
-     * session id.
+     * 会话id
      */
     private String sessionId;
 
     /**
-     * request id.
+     * 请求id
      */
     private String requestId;
 
     /**
-     * chat mode.
+     * 聊天模式
      */
     private ChatMode chatMode;
 
     /**
-     * agent status.
+     * 当前运行状态中智能体的状态
      */
     private AgentStatus agentStatus;
 
     /**
-     * user query.
+     * 用户任务
      */
     private String userQuery;
 
     /**
-     * user prompt.
+     * 自定的用户提示词
      */
     private String userPrompt;
 
     /**
-     * 用户提交的文件连接信息
+     * 用户提交的文件文件信息
      */
     private List<String> userUploadFiles;
 
     /**
-     * 任务执行过程中产生的数据
-     */
-    @Builder.Default
-    private List<String> productFiles = new LinkedList<>();
-
-    /**
-     * concurrent step.
+     * 当前智能体执行的步骤
      */
     @Builder.Default
     private Integer concurrentStep = 0;
 
 
     /**
-     * memory.
+     * chat memory.
      */
     @Builder.Default
-    private List<Message> memory = new LinkedList<>();
+    private ChatMemory chatMemory = MessageWindowChatMemory.builder()
+            .chatMemoryRepository(new InMemoryChatMemoryRepository())
+            .build();
 
     /**
      * 观测待调用工具
@@ -113,7 +112,7 @@ public class AgentContext {
      * @since 3.4.3
      */
     public void updateMemory(List<Message> memory) {
-        this.memory.addAll(memory);
+        this.chatMemory.add(this.sessionId, memory);
     }
 
     /**
@@ -123,7 +122,17 @@ public class AgentContext {
      * @since 3.4.3
      */
     public void updateMemory(Message memory) {
-        this.memory.add(memory);
+        this.chatMemory.add(this.sessionId, memory);
+    }
+
+    /**
+     * Get Memory
+     *
+     * @return list
+     * @since 1.0.0-SNAPSHOT
+     */
+    public List<Message> getMemory() {
+        return this.chatMemory.get(this.sessionId);
     }
 
     /**
@@ -133,10 +142,11 @@ public class AgentContext {
      * @since 3.4.3
      */
     public boolean lastMessageIsUser() {
-        if (this.memory.isEmpty()) {
+        List<Message> messages = this.chatMemory.get(this.sessionId);
+        if (CollUtil.isEmpty(messages)) {
             return false;
         }
-        Message lastMessage = this.memory.get(this.memory.size() - 1);
+        Message lastMessage = messages.get(messages.size() - 1);
         return lastMessage.getMessageType() == MessageType.USER;
     }
 

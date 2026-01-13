@@ -105,6 +105,9 @@ public abstract class BaseLLM<T> {
         if (StrUtil.isBlank(blockedLast)) {
             return null;
         }
+        if (clazz == String.class) {
+            return (T) blockedLast;
+        }
         BeanOutputConverter<T> outputConverter = new BeanOutputConverter<>(clazz);
         return outputConverter.convert(blockedLast);
     }

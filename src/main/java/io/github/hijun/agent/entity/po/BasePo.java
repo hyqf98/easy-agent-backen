@@ -16,10 +16,15 @@ import java.io.Serializable;
  * @author haijun
  * @version 3.4.3
  * @date 2026/01/12
+ * @email "mailto:iamxiaohaijun@gmail.com"
+ * @since 1.0.0-SNAPSHOT
  */
 @Data
 public abstract class BasePo implements Serializable {
 
+    /**
+     * serial version u i d.
+     */
     private static final long serialVersionUID = 1L;
 
     /**
@@ -28,7 +33,7 @@ public abstract class BasePo implements Serializable {
      * 使用雪花算法自动生成
      */
     @TableId(value = "id", type = IdType.ASSIGN_ID)
-    private String id;
+    private Long id;
 
     /**
      * 创建时间

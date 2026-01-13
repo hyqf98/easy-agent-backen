@@ -2,7 +2,6 @@ package io.github.hijun.agent.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.hijun.agent.utils.JSONS;
-import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -43,11 +42,7 @@ public class WebAutoConfiguration implements WebMvcConfigurer {
      * @since 1.0.0-SNAPSHOT
      */
     @Bean
-    public Jackson2ObjectMapperBuilderCustomizer jacksonCustomizer() {
-        return builder -> {
-            // 使用JSONS中的配置逻辑
-            ObjectMapper objectMapper = JSONS.getObjectMapper();
-            builder.createXmlMapper(false).build(objectMapper);
-        };
+    public ObjectMapper objectMapper() {
+        return JSONS.getObjectMapper();
     }
 }

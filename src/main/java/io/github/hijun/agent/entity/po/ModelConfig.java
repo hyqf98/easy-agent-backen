@@ -1,8 +1,6 @@
 package io.github.hijun.agent.entity.po;
 
-import com.baomidou.mybatisplus.annotation.IdGeneratorAssignt;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,15 +24,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("model_config")
-public class ModelConfig {
+public class ModelConfig extends BasePo {
 
-    /**
-     * 主键ID
-     * <p>
-     * 使用雪花算法自动生成
-     */
-    @TableId(value = "id", type = IdGeneratorAssignt.ASSIGN_ID)
-    private String id;
 
     /**
      * 提供商配置ID
@@ -75,20 +66,4 @@ public class ModelConfig {
      */
     @TableField("description")
     private String description;
-
-    /**
-     * 创建时间
-     * <p>
-     * 记录创建该配置的时间戳（毫秒）
-     */
-    @TableField("create_time")
-    private Long createTime;
-
-    /**
-     * 更新时间
-     * <p>
-     * 记录最后更新该配置的时间戳（毫秒）
-     */
-    @TableField("update_time")
-    private Long updateTime;
 }
