@@ -1,73 +1,62 @@
 package io.github.hijun.agent.tools;
 
-import io.github.hijun.agent.tools.FileWriteTool.FileWriteParams;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 /**
- * Simple File Write Tool Test
+ * FileTools Test
  *
- * @author haijun
- * @version 1.0.0-SNAPSHOT
+ * @author hijun
+ * @version 1.0.0
  * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/1/7 15:36
- * @since 1.0.0-SNAPSHOT
+ * @since 1.0.0
  */
 @SpringBootTest
 class SimpleFileWriteToolTest {
 
     /**
-     * file write tool.
+     * file tools.
      */
     @Autowired
-    private FileWriteTool fileWriteTool;
+    private FileTools fileTools;
 
     /**
-     * Test File Write Md
+     * Test Write File
      *
-     * @since 1.0.0-SNAPSHOT
+     * @since 1.0.0
      */
     @Test
-    void testFileWriteMd() {
-        FileWriteParams params = new FileWriteParams(
-                "test", "md", "# Test Markdown\nThis is a test."
-        );
-
-        this.fileWriteTool.fileWrite(params);
+    void testWriteFile() {
+        String result = fileTools.writeFile("test.md", "# Test Markdown\nThis is a test.");
+        System.out.println("File written to: " + result);
     }
 
     /**
-     * Test File Write Html
+     * Test Write File In Session
      *
-     * @since 1.0.0-SNAPSHOT
+     * @since 1.0.0
      */
     @Test
-    void testFileWriteHtml() {
-
-        String htmlContent = "<html><body><h1>Test HTML</h1></body></html>";
-        FileWriteParams params = new FileWriteParams(
-                "test", "html", htmlContent
-        );
-        this.fileWriteTool.fileWrite(params);
+    void testWriteFileInSession() {
+        String sessionId = "test-session-" + System.currentTimeMillis();
+        String result = fileTools.writeFileInSession(sessionId, "plan", "## Test Plan\nThis is a test plan.");
+        System.out.println("File written to: " + result);
     }
 
     /**
-     * Test File Write Invalid File Type
+     * Test Read File
      *
-     * @since 1.0.0-SNAPSHOT
+     * @since 1.0.0
      */
     @Test
-    void testFileWriteInvalidFileType() {
-        FileWriteParams params = new FileWriteParams(
-                "test", "txt", "Content"
-        );
+    void testReadFile() {
+        // 先写入文件
+        String writeResult = fileTools.writeFile("test-read.md", "# Test Content\nContent to read.");
 
-        // 验证无效文件类型会抛出异常
-        try {
-            this.fileWriteTool.fileWrite(params);
-        } catch (IllegalArgumentException e) {
-            // 预期的异常
-        }
+        // 读取文件
+        String content = fileTools.readFile("test-read.md");
+        System.out.println("File content: " + content);
     }
 }
