@@ -1,6 +1,5 @@
 package io.github.hijun.agent.service.strategy;
 
-import cn.hutool.core.util.StrUtil;
 import io.github.hijun.agent.common.Agent;
 import io.github.hijun.agent.common.constant.AgentConstants;
 import io.github.hijun.agent.common.constant.FileConstants;
@@ -8,7 +7,6 @@ import io.github.hijun.agent.common.constant.MessageConstants;
 import io.github.hijun.agent.common.enums.ChatMode;
 import io.github.hijun.agent.common.enums.SseMessageType;
 import io.github.hijun.agent.entity.dto.ContentMessage;
-import io.github.hijun.agent.entity.dto.FileCreatedMessage;
 import io.github.hijun.agent.entity.po.AgentContext;
 import io.github.hijun.agent.entity.po.CallResponse;
 import io.github.hijun.agent.tools.FileTools;
@@ -16,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -29,27 +28,27 @@ import java.util.List;
  *
  * <h3>职责</h3>
  * <ul>
- *   <li>读取 PlanningAgent 生成的 plan.md 文件</li>
- *   <li>读取 DataCollectAgent 生成的 data.md 文件</li>
- *   <li>根据生成模式（PPT/Markdown/HTML）生成相应格式的内容</li>
- *   <li>将内容保存到会话目录的 content.md 文件</li>
- *   <li>流式发送生成的内容给前端</li>
+ * <li>读取 PlanningAgent 生成的 plan.md 文件</li>
+ * <li>读取 DataCollectAgent 生成的 data.md 文件</li>
+ * <li>根据生成模式（PPT/Markdown/HTML）生成相应格式的内容</li>
+ * <li>将内容保存到会话目录的 content.md 文件</li>
+ * <li>流式发送生成的内容给前端</li>
  * </ul>
  *
  * <h3>输入</h3>
  * <ul>
- *   <li>plan.md 文件（由 PlanningAgent 生成）</li>
- *   <li>data.md 文件（由 DataCollectAgent 生成）</li>
- *   <li>会话 ID（sessionId）</li>
- *   <li>生成模式（chatMode）：PPT/Markdown/HTML</li>
+ * <li>plan.md 文件（由 PlanningAgent 生成）</li>
+ * <li>data.md 文件（由 DataCollectAgent 生成）</li>
+ * <li>会话 ID（sessionId）</li>
+ * <li>生成模式（chatMode）：PPT/Markdown/HTML</li>
  * </ul>
  *
  * <h3>输出</h3>
  * <ul>
- *   <li>SSE 消息：{@link MessageConstants.SseType#THINKING}（思考过程）</li>
- *   <li>SSE 消息：{@link MessageConstants.SseType#CONTENT_CHUNK}（流式内容）</li>
- *   <li>SSE 消息：FILE_CREATED（content.md）</li>
- *   <li>CallResponse（执行结果，包含 content.md 文件路径）</li>
+ * <li>SSE 消息：{@link MessageConstants.SseType#THINKING}（思考过程）</li>
+ * <li>SSE 消息：{@link MessageConstants.SseType#CONTENT_CHUNK}（流式内容）</li>
+ * <li>SSE 消息：FILE_CREATED（content.md）</li>
+ * <li>CallResponse（执行结果，包含 content.md 文件路径）</li>
  * </ul>
  *
  * <h3>最终结果</h3>
@@ -57,6 +56,9 @@ import java.util.List;
  *
  * @author hijun
  * @since 1.0.0
+ * @email "mailto:iamxiaohaijun@gmail.com"
+ * @date 2026/1/29 17:52
+ * @version 1.0.0-SNAPSHOT
  */
 @Slf4j
 @Component
@@ -74,6 +76,7 @@ public class ContentGenAgent extends SimpleAgent {
      *
      * @param chatClient 聊天客户端
      * @param fileTools  文件工具
+     * @since 1.0.0-SNAPSHOT
      */
     public ContentGenAgent(ChatClient chatClient, FileTools fileTools) {
         super(chatClient);
@@ -85,6 +88,7 @@ public class ContentGenAgent extends SimpleAgent {
      *
      * @param context 智能体上下文
      * @return 调用响应
+     * @since 1.0.0-SNAPSHOT
      */
     @Override
     public CallResponse execute(AgentContext context) {
@@ -96,27 +100,24 @@ public class ContentGenAgent extends SimpleAgent {
 
         try {
             // 读取规划和数据文件
-            String plan = fileTools.readFile(sessionId + "/plan.md");
-            String data = fileTools.readFile(sessionId + "/data.md");
+            String plan = this.fileTools.readFile(sessionId + "/plan.md");
+            String data = this.fileTools.readFile(sessionId + "/data.md");
 
             // 发送思考消息
-            sendThinking(emitter, "正在生成" + mode.getDescription() + "内容...");
+            this.sendThinking(emitter, "正在生成" + mode.getDescription() + "内容...");
 
             // 构建用户提示词
-            String userPrompt = buildUserPrompt(plan, data, mode);
+            String userPrompt = this.buildUserPrompt(plan, data, mode);
 
             // 调用 LLM 生成内容
-            String content = callLLMString(userPrompt, context.getToolCallbacks());
+            String content = this.callLLMString(userPrompt, context.getToolCallbacks());
 
             // 保存内容
-            String contentPath = fileTools.writeFileInSession(sessionId, FileConstants.FileType.CONTENT, content);
+            String contentPath = this.fileTools.writeFileInSession(sessionId, FileConstants.FileType.CONTENT, content);
             log.info("内容已保存到: {}", contentPath);
 
             // 流式发送内容
-            streamContent(emitter, content);
-
-            // 发送文件创建消息
-            sendFileCreated(emitter, "content" + FileConstants.FileExtension.MARKDOWN, contentPath, FileConstants.FileType.CONTENT);
+            this.streamContent(emitter, content);
 
             return CallResponse.builder()
                     .success(true)
@@ -126,7 +127,7 @@ public class ContentGenAgent extends SimpleAgent {
 
         } catch (Exception e) {
             log.error("内容生成失败", e);
-            sendError(emitter, "内容生成失败: " + e.getMessage());
+            this.sendError(emitter, "内容生成失败: " + e.getMessage());
             return CallResponse.builder()
                     .success(false)
                     .message(e.getMessage())
@@ -138,6 +139,7 @@ public class ContentGenAgent extends SimpleAgent {
      * 获取系统提示词.
      *
      * @return 系统提示词
+     * @since 1.0.0-SNAPSHOT
      */
     @Override
     protected String getSystemPrompt() {
@@ -171,6 +173,7 @@ public class ContentGenAgent extends SimpleAgent {
      * @param data 数据内容
      * @param mode 生成模式
      * @return 用户提示词
+     * @since 1.0.0-SNAPSHOT
      */
     private String buildUserPrompt(String plan, String data, ChatMode mode) {
         String modeInstruction = switch (mode) {
@@ -193,6 +196,10 @@ public class ContentGenAgent extends SimpleAgent {
 
     /**
      * 发送思考消息.
+     *
+     * @param emitter emitter
+     * @param content content
+     * @since 1.0.0-SNAPSHOT
      */
     private void sendThinking(SseEmitter emitter, String content) {
         try {
@@ -208,6 +215,10 @@ public class ContentGenAgent extends SimpleAgent {
 
     /**
      * 流式发送内容.
+     *
+     * @param emitter emitter
+     * @param content content
+     * @since 1.0.0-SNAPSHOT
      */
     private void streamContent(SseEmitter emitter, String content) {
         try {
@@ -229,23 +240,11 @@ public class ContentGenAgent extends SimpleAgent {
     }
 
     /**
-     * 发送文件创建消息.
-     */
-    private void sendFileCreated(SseEmitter emitter, String fileName, String filePath, String fileType) {
-        try {
-            FileCreatedMessage message = new FileCreatedMessage();
-            message.setType(SseMessageType.FILE_CREATED);
-            message.setFileName(fileName);
-            message.setFilePath(filePath);
-            message.setFileType(fileType);
-            emitter.send(message);
-        } catch (IOException e) {
-            log.error("发送文件创建消息失败", e);
-        }
-    }
-
-    /**
      * 发送错误消息.
+     *
+     * @param emitter emitter
+     * @param error error
+     * @since 1.0.0-SNAPSHOT
      */
     private void sendError(SseEmitter emitter, String error) {
         try {
@@ -261,10 +260,15 @@ public class ContentGenAgent extends SimpleAgent {
 
     /**
      * 调用 LLM 返回字符串结果.
+     *
+     * @param userPrompt user prompt
+     * @param toolCallbacks tool callbacks
+     * @return string
+     * @since 1.0.0-SNAPSHOT
      */
-    private String callLLMString(String userPrompt, List<org.springframework.ai.tool.ToolCallback> toolCallbacks) {
+    private String callLLMString(String userPrompt, List<ToolCallback> toolCallbacks) {
         UserMessage userMessage = new UserMessage(userPrompt);
         List<Message> messages = List.of(userMessage);
-        return callLLM(messages, toolCallbacks, false, String.class);
+        return this.callLLM(messages, toolCallbacks, false, String.class);
     }
 }

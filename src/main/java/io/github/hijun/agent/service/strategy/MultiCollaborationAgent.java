@@ -8,7 +8,6 @@ import io.github.hijun.agent.common.constant.AgentConstants;
 import io.github.hijun.agent.common.enums.AgentStatus;
 import io.github.hijun.agent.common.enums.ChatMode;
 import io.github.hijun.agent.config.AgentProperties;
-import io.github.hijun.agent.entity.dto.AgentSwitchMessage;
 import io.github.hijun.agent.entity.dto.ContentMessage;
 import io.github.hijun.agent.entity.po.AgentContext;
 import io.github.hijun.agent.entity.po.CallResponse;
@@ -35,50 +34,52 @@ import java.util.Map;
  *
  * <p>负责协调多个智能体的执行，支持两种运行模式：</p>
  * <ul>
- *   <li><b>智能体链模式</b>：用于 PPT/Markdown/HTML 生成，按固定顺序执行智能体链</li>
- *   <li><b>ReAct 模式</b>：用于智能对话，基于 ReAct (Reasoning + Acting) 策略动态调用智能体</li>
+ * <li><b>智能体链模式</b>：用于 PPT/Markdown/HTML 生成，按固定顺序执行智能体链</li>
+ * <li><b>ReAct 模式</b>：用于智能对话，基于 ReAct (Reasoning + Acting) 策略动态调用智能体</li>
  * </ul>
  *
  * <h3>智能体链执行流程</h3>
  * <pre>
  * 用户请求
- *     ↓
+ * ↓
  * MultiCollaborationAgent.runAgentChain()
- *     ↓
+ * ↓
  * ┌─────────────────────────────────────────────┐
  * │  1. PlanningAgent                            │
  * │     输出: plan.md                            │
  * │     消息: THINKING, FILE_CREATED, PLAN_RESULT│
  * └─────────────────────────────────────────────┘
- *     ↓
+ * ↓
  * ┌─────────────────────────────────────────────┐
  * │  2. DataCollectAgent                         │
  * │     读取: plan.md                            │
  * │     输出: data.md                            │
  * │     消息: THINKING, TOOL_CALL_*              │
  * └─────────────────────────────────────────────┘
- *     ↓
+ * ↓
  * ┌─────────────────────────────────────────────┐
  * │  3. ContentGenAgent                          │
  * │     读取: plan.md, data.md                   │
  * │     输出: content.md                         │
  * │     消息: THINKING, CONTENT_CHUNK            │
  * └─────────────────────────────────────────────┘
- *     ↓
+ * ↓
  * FinalResult (content.md 路径 - 直接作为最终文件)
  * </pre>
  *
  * <h3>ReAct 模式工作流</h3>
  * <ol>
- *   <li><b>[THOUGHT]</b> - 分析当前信息，判断需要哪种专家</li>
- *   <li><b>[ACT]</b> - 调用相应专家执行任务</li>
- *   <li><b>[OBSERVE]</b> - 观察结果，决定下一步行动</li>
- *   <li>重复直到任务完成</li>
+ * <li><b>[THOUGHT]</b> - 分析当前信息，判断需要哪种专家</li>
+ * <li><b>[ACT]</b> - 调用相应专家执行任务</li>
+ * <li><b>[OBSERVE]</b> - 观察结果，决定下一步行动</li>
+ * <li>重复直到任务完成</li>
  * </ol>
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT
  * @since 1.0.0-SNAPSHOT
+ * @email "mailto:iamxiaohaijun@gmail.com"
+ * @date 2026/1/29 17:52
  */
 @Slf4j
 @Service
@@ -193,11 +194,11 @@ public class MultiCollaborationAgent extends BaseLLM<MultiCollaborationAgent.Fin
         ChatMode chatMode = agentContext.getChatMode();
         if (chatMode == ChatMode.PPT || chatMode == ChatMode.MARKDOWN ||
             chatMode == ChatMode.HTML || chatMode == ChatMode.REPORT) {
-            return runAgentChain(agentContext);
+            return this.runAgentChain(agentContext);
         }
 
         // 智能对话模式使用原有的 ReAct 模式
-        return runReactMode(agentContext);
+        return this.runReactMode(agentContext);
     }
 
     /**
@@ -209,6 +210,7 @@ public class MultiCollaborationAgent extends BaseLLM<MultiCollaborationAgent.Fin
      *
      * @param agentContext 智能体上下文
      * @return 最终结果，包含最终文件路径信息
+     * @since 1.0.0-SNAPSHOT
      */
     private FinalResult runAgentChain(AgentContext agentContext) {
         log.info("使用智能体链模式，模式: {}", agentContext.getChatMode());
@@ -217,17 +219,11 @@ public class MultiCollaborationAgent extends BaseLLM<MultiCollaborationAgent.Fin
         List<String> agentChain = AgentConstants.AgentChain.REPORT_CHAIN;
 
         List<String> fileInfos = new ArrayList<>();
-        String previousAgentName = "MultiCollaborationAgent";
-
         try {
             // 依次执行智能体链
             for (String agentKey : agentChain) {
-                // 发送智能体切换消息
-                sendAgentSwitch(agentContext, previousAgentName,
-                        extractShortName(agentKey), "上一步骤完成");
-
                 // 获取并执行智能体
-                SimpleAgent agent = (SimpleAgent) agentManager.getAgent(agentKey);
+                SimpleAgent agent = (SimpleAgent) this.agentManager.getAgent(agentKey);
                 if (agent == null) {
                     log.error("智能体不存在: {}", agentKey);
                     continue;
@@ -237,7 +233,7 @@ public class MultiCollaborationAgent extends BaseLLM<MultiCollaborationAgent.Fin
 
                 if (!response.getSuccess()) {
                     log.error("智能体 {} 执行失败: {}", agentKey, response.getMessage());
-                    sendError(agentContext, "智能体执行失败: " + response.getMessage());
+                    this.sendError(agentContext, "智能体执行失败: " + response.getMessage());
                     return new FinalResult("智能体执行失败", List.of());
                 }
 
@@ -245,12 +241,10 @@ public class MultiCollaborationAgent extends BaseLLM<MultiCollaborationAgent.Fin
                 if (response.getData() != null) {
                     fileInfos.add(response.getData().toString());
                 }
-
-                previousAgentName = extractShortName(agentKey);
             }
 
             // 发送完成消息
-            sendCompleted(agentContext, "所有任务已完成");
+            this.sendCompleted(agentContext, "所有任务已完成");
             agentContext.getSseEmitter().complete();
 
             // ContentGenAgent 输出的 content.md 直接作为最终文件
@@ -258,7 +252,7 @@ public class MultiCollaborationAgent extends BaseLLM<MultiCollaborationAgent.Fin
 
         } catch (Exception e) {
             log.error("智能体链执行失败", e);
-            sendError(agentContext, "执行失败: " + e.getMessage());
+            this.sendError(agentContext, "执行失败: " + e.getMessage());
             return new FinalResult("执行失败", List.of());
         }
     }
@@ -269,6 +263,7 @@ public class MultiCollaborationAgent extends BaseLLM<MultiCollaborationAgent.Fin
      *
      * @param agentContext 智能体上下文
      * @return 最终结果
+     * @since 1.0.0-SNAPSHOT
      */
     private FinalResult runReactMode(AgentContext agentContext) {
         Integer maxStep = this.agentProperties.getMaxStep();
@@ -436,6 +431,7 @@ public class MultiCollaborationAgent extends BaseLLM<MultiCollaborationAgent.Fin
      *
      * @param fullName 完整名称（如 20001_PlanningAgent）
      * @return 短名称（如 PlanningAgent）
+     * @since 1.0.0-SNAPSHOT
      */
     private String extractShortName(String fullName) {
         if (fullName == null) {
@@ -445,24 +441,13 @@ public class MultiCollaborationAgent extends BaseLLM<MultiCollaborationAgent.Fin
         return index > 0 ? fullName.substring(index + 1) : fullName;
     }
 
-    /**
-     * 发送智能体切换消息.
-     */
-    private void sendAgentSwitch(AgentContext context, String fromAgent, String toAgent, String reason) {
-        try {
-            AgentSwitchMessage message = new AgentSwitchMessage();
-            message.setType(io.github.hijun.agent.common.enums.SseMessageType.AGENT_SWITCH);
-            message.setFromAgent(fromAgent);
-            message.setToAgent(toAgent);
-            message.setReason(reason);
-            context.getSseEmitter().send(message);
-        } catch (IOException e) {
-            log.error("发送智能体切换消息失败", e);
-        }
-    }
 
     /**
      * 发送完成消息.
+     *
+     * @param context context
+     * @param message message
+     * @since 1.0.0-SNAPSHOT
      */
     private void sendCompleted(AgentContext context, String message) {
         try {
@@ -478,6 +463,10 @@ public class MultiCollaborationAgent extends BaseLLM<MultiCollaborationAgent.Fin
 
     /**
      * 发送错误消息.
+     *
+     * @param context context
+     * @param error error
+     * @since 1.0.0-SNAPSHOT
      */
     private void sendError(AgentContext context, String error) {
         try {
