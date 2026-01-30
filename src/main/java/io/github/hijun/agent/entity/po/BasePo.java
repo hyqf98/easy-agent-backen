@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * 基础实体类
@@ -28,6 +29,21 @@ public abstract class BasePo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
+     * i d.
+     */
+    public static final String ID = "id";
+
+    /**
+     * create time.
+     */
+    public static final String CREATE_TIME = "create_time";
+
+    /**
+     * update time.
+     */
+    public static final String UPDATE_TIME = "update_time";
+
+    /**
      * 主键ID
      * <p>
      * 使用雪花算法自动生成
@@ -41,7 +57,7 @@ public abstract class BasePo implements Serializable {
      * 记录创建该实体的时间戳（毫秒）
      */
     @TableField(value = "create_time", fill = FieldFill.INSERT)
-    private Long createTime;
+    private Date createTime;
 
     /**
      * 更新时间
@@ -49,5 +65,5 @@ public abstract class BasePo implements Serializable {
      * 记录最后更新该实体的时间戳（毫秒）
      */
     @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    private Long updateTime;
+    private Date updateTime;
 }

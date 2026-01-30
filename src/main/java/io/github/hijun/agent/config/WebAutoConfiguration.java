@@ -1,7 +1,7 @@
 package io.github.hijun.agent.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.github.hijun.agent.utils.JSONS;
+import io.github.hijun.agent.utils.Jsons;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -43,6 +43,6 @@ public class WebAutoConfiguration implements WebMvcConfigurer {
      */
     @Bean
     public ObjectMapper objectMapper() {
-        return JSONS.getObjectMapper();
+        return Jsons.getObjectMapper();
     }
 }

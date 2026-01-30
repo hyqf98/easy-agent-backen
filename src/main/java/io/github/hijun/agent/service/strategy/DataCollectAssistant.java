@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Data Collect Assistant
+ * 数据采集智能体
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT

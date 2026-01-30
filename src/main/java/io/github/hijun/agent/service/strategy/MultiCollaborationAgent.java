@@ -11,7 +11,7 @@ import io.github.hijun.agent.config.AgentProperties;
 import io.github.hijun.agent.entity.dto.ContentMessage;
 import io.github.hijun.agent.entity.po.AgentContext;
 import io.github.hijun.agent.entity.po.CallResponse;
-import io.github.hijun.agent.utils.JSONS;
+import io.github.hijun.agent.utils.Jsons;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
@@ -330,7 +330,7 @@ public class MultiCollaborationAgent extends BaseLLM<MultiCollaborationAgent.Fin
                     agentContext.getToolCallbacks(),
                     false,
                     FinalResult.class);
-            agentContext.sendMessage(ContentMessage.builder().content(JSONS.toJson(finalResult)).build());
+            agentContext.sendMessage(ContentMessage.builder().content(Jsons.toJson(finalResult)).build());
             agentContext.getSseEmitter().complete();
             return finalResult;
         }

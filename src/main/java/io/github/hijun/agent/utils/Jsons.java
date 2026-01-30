@@ -18,7 +18,7 @@ import io.github.hijun.agent.common.serializer.CodeEnumSerializer;
  * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/1/12 14:58
  */
-public class JSONS {
+public class Jsons {
 
     /**
      * ObjectMapper 单例实例
@@ -33,7 +33,7 @@ public class JSONS {
      */
     public static ObjectMapper getObjectMapper() {
         if (objectMapper == null) {
-            synchronized (JSONS.class) {
+            synchronized (Jsons.class) {
                 if (objectMapper == null) {
                     objectMapper = createObjectMapper();
                 }
