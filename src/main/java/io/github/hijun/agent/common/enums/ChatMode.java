@@ -14,16 +14,11 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum ChatMode {
+public enum ChatMode implements BaseEnum<String> {
     /**
      * 默认聊天模式
      */
     CHAT("chat", "智能问答"),
-
-    /**
-     * m a r k d o w n.
-     */
-    MARKDOWN("markdown", "Markdown格式"),
 
     /**
      * h t m l.
@@ -33,19 +28,14 @@ public enum ChatMode {
     /**
      * p p t.
      */
-    PPT("ppt", "PPT模式"),
+    PPT("ppt", "PPT模式");
 
     /**
-     * 报告生成模式
+     * value.
      */
-    REPORT("report", "报告生成");
-
-    /**
-     * code.
-     */
-    private final String code;
+    private final String value;
     /**
      * description.
      */
-    private final String description;
+    private final String desc;
 }

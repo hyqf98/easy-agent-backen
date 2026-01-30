@@ -4,40 +4,40 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /**
- * Tool Status
+ * 模型提供商枚举
+ * <p>
+ * 定义支持的AI模型提供商
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT
- * @email "mailto:iamxiaohaijun@gmail.com"
- * @date 2026/1/8 14:16
  * @since 1.0.0-SNAPSHOT
  */
 @Getter
 @AllArgsConstructor
-public enum ToolStatus implements BaseEnum<String> {
+public enum ModelProvider implements BaseEnum<String> {
 
     /**
-     * c a l l i n g.
+     * OpenAI
      */
-    CALLING("calling", "正在调用"),
+    OPENAI("openai", "OpenAI"),
 
     /**
-     * s u c c e s s.
+     * 智谱AI (Zhipu AI)
      */
-    SUCCESS("success", "成功"),
+    ZHIPU_AI("zhipuai", "智谱AI"),
 
     /**
-     * f a i l e d.
+     * Anthropic
      */
-    FAILED("failed", "失败");
+    ANTHROPIC("anthropic", "Anthropic");
 
     /**
-     * value.
+     * 模型提供商代码
      */
     private final String value;
 
     /**
-     * description.
+     * 模型提供商描述
      */
     private final String desc;
 }

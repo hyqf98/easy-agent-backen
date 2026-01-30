@@ -1,7 +1,6 @@
-package io.github.hijun.agent.service.strategy;
+package io.github.hijun.agent.agent;
 
 import cn.hutool.core.util.StrUtil;
-import io.github.hijun.agent.entity.po.AgentContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
@@ -21,10 +20,9 @@ import java.util.List;
  * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/1/9 13:29
  * @since 1.0.0-SNAPSHOT
- * @param <T> t
  */
 @Slf4j
-public abstract class BaseLLM<T> {
+public abstract class BaseLLM {
 
 
     /**
@@ -44,16 +42,7 @@ public abstract class BaseLLM<T> {
 
 
     /**
-     * Run
-     *
-     * @param agentContext agent context
-     * @return t
-     * @since 1.0.0-SNAPSHOT
-     */
-    public abstract T run(AgentContext agentContext);
-
-    /**
-     * Call L L M
+     * CallLLM
      *
      * @param messages       messages
      * @param toolCallbacks  tool callbacks
@@ -72,7 +61,6 @@ public abstract class BaseLLM<T> {
 
         return this.chatClient.prompt()
                 .options(callingChatOptions)
-                .system(this.getSystemPrompt())
                 .messages(messages)
                 .stream()
                 .chatResponse()
@@ -110,15 +98,5 @@ public abstract class BaseLLM<T> {
         }
         BeanOutputConverter<T> outputConverter = new BeanOutputConverter<>(clazz);
         return outputConverter.convert(blockedLast);
-    }
-
-    /**
-     * Get System Prompt
-     *
-     * @return string
-     * @since 1.0.0-SNAPSHOT
-     */
-    protected String getSystemPrompt() {
-        return "";
     }
 }

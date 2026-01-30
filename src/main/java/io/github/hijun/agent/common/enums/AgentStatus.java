@@ -14,7 +14,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum AgentStatus {
+public enum AgentStatus implements BaseEnum<Integer> {
 
     /**
      * i d l e.
@@ -38,11 +38,11 @@ public enum AgentStatus {
 
 
     /**
-     * code.
+     * value.
      */
-    private final Integer code;
+    private final Integer value;
     /**
      * description.
      */
-    private final String description;
+    private final String desc;
 }

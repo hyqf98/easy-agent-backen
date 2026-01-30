@@ -6,8 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import io.github.hijun.agent.common.serializer.CodeEnumDeserializer;
-import io.github.hijun.agent.common.serializer.CodeEnumSerializer;
+import io.github.hijun.agent.common.enums.BaseEnum;
+import io.github.hijun.agent.common.serializer.EnumDeserializer;
+import io.github.hijun.agent.common.serializer.EnumSerializer;
 
 /**
  * JSON 工具类，提供 ObjectMapper 单例和常用 JSON 操作方法
@@ -56,8 +57,8 @@ public class Jsons {
 
         // 注册枚举序列化/反序列化处理器
         SimpleModule enumModule = new SimpleModule();
-        enumModule.addSerializer(Enum.class, new CodeEnumSerializer<>());
-        enumModule.addDeserializer(Enum.class, new CodeEnumDeserializer<>());
+        enumModule.addSerializer(BaseEnum.class, new EnumSerializer<>());
+        enumModule.addDeserializer(BaseEnum.class, new EnumDeserializer<>());
         mapper.registerModule(enumModule);
 
         // 配置序列化选项

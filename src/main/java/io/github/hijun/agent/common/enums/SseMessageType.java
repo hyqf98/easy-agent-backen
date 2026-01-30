@@ -14,7 +14,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum SseMessageType {
+public enum SseMessageType implements BaseEnum<String> {
     /**
      * 思考信息
      */
@@ -58,46 +58,15 @@ public enum SseMessageType {
      *
      * @since 1.0.0-SNAPSHOT
      */
-    ERROR("error", "错误"),
+    ERROR("error", "错误");
 
     /**
-     * 规划结果
-     * <p>规划智能体输出的任务分解结果</p>
-     *
-     * @since 1.0.0
+     * value.
      */
-    PLAN_RESULT("plan_result", "规划结果"),
+    private final String value;
 
-    /**
-     * 文件创建
-     * <p>通知前端文件已创建</p>
-     *
-     * @since 1.0.0
-     */
-    FILE_CREATED("file_created", "文件创建"),
-
-    /**
-     * 智能体切换
-     * <p>通知前端智能体正在切换</p>
-     *
-     * @since 1.0.0
-     */
-    AGENT_SWITCH("agent_switch", "智能体切换"),
-
-    /**
-     * 审查结果
-     * <p>审查智能体的审查结果</p>
-     *
-     * @since 1.0.0
-     */
-    REVIEW_RESULT("review_result", "审查结果");
-
-    /**
-     * code.
-     */
-    private final String code;
     /**
      * description.
      */
-    private final String description;
+    private final String desc;
 }

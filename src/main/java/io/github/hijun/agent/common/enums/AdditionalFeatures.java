@@ -14,7 +14,7 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public enum AdditionalFeatures {
+public enum AdditionalFeatures implements BaseEnum<String> {
 
     /**
      * deep thinking.
@@ -27,11 +27,11 @@ public enum AdditionalFeatures {
     DEEP_SEARCH("deep_search", "深度搜索");
 
     /**
-     * code.
+     * value.
      */
-    private final String code;
+    private final String value;
     /**
      * description.
      */
-    private final String description;
+    private final String desc;
 }
