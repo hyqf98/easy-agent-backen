@@ -1,14 +1,14 @@
 package io.github.hijun.agent.support;
 
 import io.github.hijun.agent.common.enums.ModelProvider;
+import io.github.hijun.agent.entity.dto.LlmModelDTO;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 
 /**
  * 动态 ChatClient 工具类
  * <p>
- * 支持动态选择 ChatModel 的 ChatClient 创建工具，配合 ChatModelFactory 使用
- * 简化了每次请求时手动创建 ChatClient 的流程
+ * 支持从数据库配置动态选择 ChatModel 的 ChatClient 创建工具
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT
@@ -22,7 +22,7 @@ public class DynamicChatClient {
     private final ChatModelFactory chatModelFactory;
 
     /**
-     * 模型配置属性
+     * 模型配置属性（保留用于兼容默认配置）
      */
     private final ModelProperties modelProperties;
 
@@ -36,6 +36,18 @@ public class DynamicChatClient {
     public DynamicChatClient(ChatModelFactory chatModelFactory, ModelProperties modelProperties) {
         this.chatModelFactory = chatModelFactory;
         this.modelProperties = modelProperties;
+    }
+
+    /**
+     * 从数据库模型配置创建 ChatClient
+     *
+     * @param modelConfig 模型配置DTO
+     * @return ChatClient 实例
+     * @since 1.0.0-SNAPSHOT
+     */
+    public ChatClient createFromModelConfig(LlmModelDTO modelConfig) {
+        ChatModel chatModel = this.chatModelFactory.createChatModel(modelConfig);
+        return ChatClient.builder(chatModel).build();
     }
 
     /**
@@ -63,7 +75,7 @@ public class DynamicChatClient {
     /**
      * 根据 ChatForm 创建 ChatClient
      *
-     * @param provider 提供商字符串（可为null，使用默认值）
+     * @param provider 提供商（可为null，使用默认值）
      * @return ChatClient 实例
      * @since 1.0.0-SNAPSHOT
      */

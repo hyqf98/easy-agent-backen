@@ -1,7 +1,10 @@
 package io.github.hijun.agent.controller;
 
-import io.github.hijun.agent.entity.req.ChatRequest;
-import io.github.hijun.agent.service.ModelService;
+import io.github.hijun.agent.entity.req.UserChatRequest;
+import io.github.hijun.agent.entity.sse.SseMessage;
+import io.github.hijun.agent.service.ChatService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,37 +13,41 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import reactor.core.publisher.Flux;
 
 /**
- * Chat Controller
+ * 聊天控制器
+ * <p>
+ * 提供聊天相关的接口，支持流式响应（SSE）
  *
  * @author haijun
- * @version 3.4.3
- * @email "mailto:iamxiaohaijun@gmail.com"
- * @date 2025/12/24 16:59
- * @since 3.4.3
+ * @version 1.0.0-SNAPSHOT
+ * @since 1.0.0-SNAPSHOT
  */
 @Slf4j
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/chat")
 @RequiredArgsConstructor
+@Tag(name = "聊天管理", description = "聊天相关接口")
 public class ChatController {
 
     /**
-     * react agent service.
+     * ChatService 注入
      */
-    private final ModelService modelService;
+    private final ChatService chatService;
 
     /**
-     * 聊天接口（SSE流式返回）
+     * 流式聊天接口（SSE）
+     * <p>
+     * 以 Server-Sent Events (SSE) 格式返回大模型的流式响应
      *
-     * @param request 聊天请求
-     * @return SSE流
-     * @since 3.4.3
+     * @param form 聊天请求表单
+     * @return Flux<ChatResponse> 流式响应
+     * @since 1.0.0-SNAPSHOT
      */
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter chat(@Valid @RequestBody ChatRequest request) {
-        return this.modelService.agent(request);
+    @Operation(summary = "流式聊天", description = "以SSE格式返回大模型的流式响应")
+    public Flux<SseMessage<?>> stream(@Valid @RequestBody UserChatRequest form) {
+        return this.chatService.streamChat(form);
     }
 }

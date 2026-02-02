@@ -1,13 +1,14 @@
 package io.github.hijun.agent.entity.req;
 
-import io.github.hijun.agent.common.enums.ModelProvider;
+import io.github.hijun.agent.common.enums.AdditionalFeatures;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 /**
  * 聊天请求表单
@@ -25,6 +26,13 @@ import lombok.NoArgsConstructor;
 public class UserChatRequest {
 
     /**
+     * 模型ID（必填，用于查询数据库获取模型配置）
+     */
+    @Schema(description = "模型ID", example = "1")
+    @NotNull(message = "模型ID不能为空")
+    private Long modelId;
+
+    /**
      * 用户消息内容
      */
     @NotBlank(message = "消息内容不能为空")
@@ -38,18 +46,27 @@ public class UserChatRequest {
     private String sessionId;
 
     /**
-     * 模型提供商（可选，默认使用配置的默认提供商）
-     * 支持的值: openai, zhipuai, anthropic
+     * 请求ID
      */
-    @Schema(description = "模型提供商", example = "openai", allowableValues = {"openai", "zhipuai", "anthropic"})
-    @NotNull(message = "模型供应商不能为空")
-    private ModelProvider provider;
+    @Schema(description = "请求ID")
+    @NotBlank(message = "请求ID不能为空")
+    private String requestId;
 
     /**
-     * 具体模型名称（可选，覆盖配置中的默认模型）
-     * 例如: gpt-4o, glm-4-air, claude-sonnet-4-5
+     * 文件列表
      */
-    @Size(max = 100, message = "模型名称长度不能超过100")
-    @Schema(description = "具体模型名称", example = "gpt-4o")
-    private String model;
+    @Schema(description = "文件列表")
+    private List<String> files;
+
+    /**
+     * additional features.
+     */
+    @Schema(description = "模型开启的功能")
+    private List<AdditionalFeatures> additionalFeatures;
+
+    /**
+     * tool ids.
+     */
+    @Schema(description = "可用工具id")
+    private List<Long> toolIds;
 }

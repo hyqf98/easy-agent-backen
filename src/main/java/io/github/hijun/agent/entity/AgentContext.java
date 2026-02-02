@@ -1,13 +1,18 @@
 package io.github.hijun.agent.entity;
 
-import io.github.hijun.agent.common.enums.AgentStatus;
 import io.github.hijun.agent.common.enums.SseMessageType;
 import io.github.hijun.agent.entity.sse.SseMessage;
+import io.github.hijun.agent.entity.sse.TextMessage;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.InMemoryChatMemoryRepository;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.tool.ToolCallback;
 import reactor.core.publisher.Sinks;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
 
 /**
  * Agent Context
@@ -40,36 +45,39 @@ public class AgentContext {
     private final String requestId;
 
     /**
-     * 最大循环步数
-     */
-    private static final int MAX_STEPS = 30;
-
-    /**
-     * 当前步数
-     */
-    private final AtomicInteger currentStep = new AtomicInteger(0);
-
-    /**
-     * Agent 状态
-     */
-    private AgentStatus status = AgentStatus.IDLE;
-
-    /**
      * 用户原始消息
      */
     private String userMessage;
+
+
+    /**
+     * tool callbacks.
+     */
+    private List<ToolCallback> toolCallbacks;
+
+    /**
+     * memory.
+     */
+    private ChatMemory chatMemory;
 
     /**
      * Agent Context
      *
      * @param sink      SSE 消息 Sink
      * @param sessionId 会话 ID
+     * @param requestId request id
      * @since 1.0.0-SNAPSHOT
      */
-    public AgentContext(Sinks.Many<SseMessage<?>> sink, String sessionId, String requestId) {
+    public AgentContext(Sinks.Many<SseMessage<?>> sink,
+                        String sessionId,
+                        String requestId) {
         this.sink = sink;
         this.sessionId = sessionId;
         this.requestId = requestId;
+
+        this.chatMemory = MessageWindowChatMemory.builder()
+                .chatMemoryRepository(new InMemoryChatMemoryRepository())
+                .build();
     }
 
     /**
@@ -91,33 +99,33 @@ public class AgentContext {
     }
 
     /**
-     * 增加步数
+     * Get Messages
      *
-     * @return 当前步数
+     * @return list
      * @since 1.0.0-SNAPSHOT
      */
-    public int incrementStep() {
-        return this.currentStep.incrementAndGet();
+    public List<Message> getMessages() {
+        return this.chatMemory.get(this.sessionId);
     }
 
     /**
-     * 获取当前步数
+     * Add Messages
      *
-     * @return 当前步数
+     * @param messages messages
      * @since 1.0.0-SNAPSHOT
      */
-    public int getCurrentStep() {
-        return this.currentStep.get();
+    public void addMessages(List<Message> messages) {
+        this.chatMemory.add(this.sessionId, messages);
     }
 
     /**
-     * 是否达到最大步数
+     * Add Message
      *
-     * @return true 如果达到最大步数
+     * @param message message
      * @since 1.0.0-SNAPSHOT
      */
-    public boolean isMaxStepsReached() {
-        return this.currentStep.get() >= MAX_STEPS;
+    public void addMessage(Message message) {
+        this.chatMemory.add(this.sessionId, message);
     }
 
     /**
@@ -126,7 +134,8 @@ public class AgentContext {
      * @since 1.0.0-SNAPSHOT
      */
     public void complete() {
-        this.setStatus(AgentStatus.FINISHED);
+        TextMessage done = TextMessage.builder().text("DONE").build();
+        this.sendMessage(SseMessageType.COMPLETED, done);
         this.sink.tryEmitComplete();
     }
 
@@ -137,18 +146,8 @@ public class AgentContext {
      * @since 1.0.0-SNAPSHOT
      */
     public void error(Throwable error) {
-        this.setStatus(AgentStatus.ERROR);
+        TextMessage done = TextMessage.builder().text(error.getMessage()).build();
+        this.sendMessage(SseMessageType.ERROR, done);
         this.sink.tryEmitError(error);
-    }
-
-    /**
-     * 重置上下文（用于复用）
-     *
-     * @since 1.0.0-SNAPSHOT
-     */
-    public void reset() {
-        this.currentStep.set(0);
-        this.status = AgentStatus.IDLE;
-        this.userMessage = null;
     }
 }

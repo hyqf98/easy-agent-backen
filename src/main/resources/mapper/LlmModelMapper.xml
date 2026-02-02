@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.hijun.agent.mapper.LlmModelMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="io.github.hijun.agent.entity.po.LlmModel">
+        <id column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="deleted" property="deleted"/>
+        <result column="model_code" property="modelCode"/>
+        <result column="model_name" property="modelName"/>
+        <result column="provider_type" property="providerType"/>
+        <result column="api_key" property="apiKey"/>
+        <result column="base_url" property="baseUrl"/>
+        <result column="temperature" property="temperature"/>
+        <result column="max_tokens" property="maxTokens"/>
+        <result column="max_context_window" property="maxContextWindow"/>
+        <result column="top_p" property="topP"/>
+        <result column="top_k" property="topK"/>
+        <result column="support_tools" property="supportTools"/>
+        <result column="support_vision" property="supportVision"/>
+        <result column="extra_params" property="extraParams"/>
+        <result column="enabled" property="enabled"/>
+        <result column="is_default" property="isDefault"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        a.id,
+        a.create_time,
+        a.update_time,
+        a.deleted,
+        a.model_code,
+        a.model_name,
+        a.provider_type,
+        a.api_key,
+        a.base_url,
+        a.temperature,
+        a.max_tokens,
+        a.max_context_window,
+        a.top_p,
+        a.top_k,
+        a.support_tools,
+        a.support_vision,
+        a.extra_params,
+        a.enabled,
+        a.is_default,
+        a.sort_order,
+        a.remark
+    </sql>
+
+</mapper>

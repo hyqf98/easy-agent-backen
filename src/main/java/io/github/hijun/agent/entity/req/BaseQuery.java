@@ -1,10 +1,17 @@
 package io.github.hijun.agent.entity.req;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.Date;
+
 /**
- * Base Query
+ * 基础查询条件类
+ * <p>
+ * 所有查询条件的基类，包含分页参数和时间范围查询参数
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT
@@ -14,16 +21,30 @@ import lombok.experimental.SuperBuilder;
  */
 @Data
 @SuperBuilder
+@AllArgsConstructor
+@NoArgsConstructor
 public abstract class BaseQuery {
 
     /**
-     * page.
+     * 当前页码
      */
-    private Integer page;
+    @Builder.Default
+    private Long pageNum = 1L;
 
     /**
-     * page size.
+     * 每页大小
      */
-    private Integer pageSize;
+    @Builder.Default
+    private Long pageSize = 10L;
+
+    /**
+     * 开始时间（创建时间范围）
+     */
+    private Date startTime;
+
+    /**
+     * 结束时间（创建时间范围）
+     */
+    private Date endTime;
 
 }

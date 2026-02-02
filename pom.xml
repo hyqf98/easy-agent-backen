@@ -81,7 +81,17 @@
             <artifactId>spring-ai-anthropic</artifactId>
         </dependency>
 
+        <!-- Spring AI MCP Client -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-client</artifactId>
+        </dependency>
 
+        <!-- Spring AI MCP 核心库（手动配置，不含starter） -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-mcp</artifactId>
+        </dependency>
 
         <!-- Jackson JSR310 for Java 8 time support -->
         <dependency>

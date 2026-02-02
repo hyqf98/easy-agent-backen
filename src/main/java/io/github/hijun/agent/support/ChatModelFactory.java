@@ -2,6 +2,7 @@ package io.github.hijun.agent.support;
 
 import io.github.hijun.agent.common.enums.BaseEnum;
 import io.github.hijun.agent.common.enums.ModelProvider;
+import io.github.hijun.agent.entity.dto.LlmModelDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.anthropic.AnthropicChatModel;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Component;
 /**
  * ChatModel 工厂类
  * <p>
- * 根据模型提供商动态创建对应的 ChatModel 实例
+ * 根据模型提供商或数据库配置动态创建对应的 ChatModel 实例
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT
@@ -31,12 +32,12 @@ import org.springframework.stereotype.Component;
 public class ChatModelFactory {
 
     /**
-     * 模型配置属性
+     * 模型配置属性（保留用于兼容默认配置）
      */
     private final ModelProperties modelProperties;
 
     /**
-     * 根据模型提供商获取对应的 ChatModel
+     * 根据模型提供商获取对应的 ChatModel（使用配置文件）
      *
      * @param provider 模型提供商
      * @return ChatModel 实例
@@ -48,6 +49,139 @@ public class ChatModelFactory {
             case ZHIPU_AI -> this.createZhipuAIChatModel();
             case ANTHROPIC -> this.createAnthropicChatModel();
         };
+    }
+
+    /**
+     * 根据数据库模型配置创建 ChatModel
+     * <p>
+     * 从数据库查询的 LlmModelDTO 创建对应的 ChatModel 实例
+     *
+     * @param modelConfig 模型配置DTO
+     * @return ChatModel 实例
+     * @since 1.0.0-SNAPSHOT
+     */
+    public ChatModel createChatModel(LlmModelDTO modelConfig) {
+        if (modelConfig == null) {
+            throw new IllegalArgumentException("模型配置不能为空");
+        }
+
+        ModelProvider providerType = modelConfig.getProviderType();
+        if (providerType == null) {
+            throw new IllegalArgumentException("提供商类型不能为空");
+        }
+
+        log.info("从数据库配置创建 ChatModel: provider={}, modelCode={}", providerType, modelConfig.getModelCode());
+
+        return switch (providerType) {
+            case OPENAI -> this.createOpenAIChatModel(modelConfig);
+            case ZHIPU_AI -> this.createZhipuAIChatModel(modelConfig);
+            case ANTHROPIC -> this.createAnthropicChatModel(modelConfig);
+        };
+    }
+
+    /**
+     * 创建 OpenAI ChatModel（从数据库配置）
+     *
+     * @param modelConfig 模型配置
+     * @return OpenAI ChatModel 实例
+     * @since 1.0.0-SNAPSHOT
+     */
+    private ChatModel createOpenAIChatModel(LlmModelDTO modelConfig) {
+        log.info("创建 OpenAI ChatModel: modelCode={}", modelConfig.getModelCode());
+
+        OpenAiApi.Builder apiBuilder = OpenAiApi.builder()
+                .apiKey(modelConfig.getApiKey());
+
+        // 如果配置了 baseUrl，使用自定义地址
+        if (modelConfig.getBaseUrl() != null && !modelConfig.getBaseUrl().isBlank()) {
+            apiBuilder.baseUrl(modelConfig.getBaseUrl());
+        }
+
+        OpenAiApi openAiApi = apiBuilder.build();
+
+        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
+                .model(modelConfig.getModelCode())
+                .temperature(modelConfig.getTemperature())
+                .maxTokens(modelConfig.getMaxTokens());
+
+        // 如果配置了 topP，添加到选项
+        if (modelConfig.getTopP() != null) {
+            optionsBuilder.topP(modelConfig.getTopP());
+        }
+
+        return OpenAiChatModel.builder()
+                .openAiApi(openAiApi)
+                .defaultOptions(optionsBuilder.build())
+                .build();
+    }
+
+    /**
+     * 创建智谱AI ChatModel（从数据库配置）
+     *
+     * @param modelConfig 模型配置
+     * @return 智谱AI ChatModel 实例
+     * @since 1.0.0-SNAPSHOT
+     */
+    private ChatModel createZhipuAIChatModel(LlmModelDTO modelConfig) {
+        log.info("创建智谱AI ChatModel: modelCode={}", modelConfig.getModelCode());
+
+        ZhiPuAiApi.Builder apiBuilder = ZhiPuAiApi.builder()
+                .apiKey(modelConfig.getApiKey());
+
+        // 智谱AI的 API 构建器支持自定义 baseUrl
+        if (modelConfig.getBaseUrl() != null && !modelConfig.getBaseUrl().isBlank()) {
+            apiBuilder.baseUrl(modelConfig.getBaseUrl());
+        }
+
+        ZhiPuAiApi zhiPuAiApi = apiBuilder.build();
+
+        ZhiPuAiChatOptions.Builder optionsBuilder = ZhiPuAiChatOptions.builder()
+                .model(modelConfig.getModelCode())
+                .temperature(modelConfig.getTemperature())
+                .maxTokens(modelConfig.getMaxTokens());
+
+        // 如果配置了 topP，添加到选项
+        if (modelConfig.getTopP() != null) {
+            optionsBuilder.topP(modelConfig.getTopP());
+        }
+
+        return new ZhiPuAiChatModel(zhiPuAiApi, optionsBuilder.build());
+    }
+
+    /**
+     * 创建 Anthropic ChatModel（从数据库配置）
+     *
+     * @param modelConfig 模型配置
+     * @return Anthropic ChatModel 实例
+     * @since 1.0.0-SNAPSHOT
+     */
+    private ChatModel createAnthropicChatModel(LlmModelDTO modelConfig) {
+        log.info("创建 Anthropic ChatModel: modelCode={}", modelConfig.getModelCode());
+
+        AnthropicApi.Builder apiBuilder = AnthropicApi.builder()
+                .apiKey(modelConfig.getApiKey());
+
+        // Anthropic 的 API 构建器支持自定义 baseUrl
+        if (modelConfig.getBaseUrl() != null && !modelConfig.getBaseUrl().isBlank()) {
+            apiBuilder.baseUrl(modelConfig.getBaseUrl());
+        }
+
+        AnthropicApi anthropicApi = apiBuilder.build();
+
+        AnthropicChatOptions.Builder optionsBuilder = AnthropicChatOptions.builder()
+                .model(modelConfig.getModelCode())
+                .temperature(modelConfig.getTemperature())
+                .maxTokens(modelConfig.getMaxTokens());
+
+        // 如果配置了 topP，添加到选项
+        if (modelConfig.getTopP() != null) {
+            optionsBuilder.topP(modelConfig.getTopP());
+        }
+
+        return AnthropicChatModel.builder()
+                .anthropicApi(anthropicApi)
+                .defaultOptions(optionsBuilder.build())
+                .build();
     }
 
     /**

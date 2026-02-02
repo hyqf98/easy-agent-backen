@@ -1,6 +1,10 @@
 package io.github.hijun.agent.entity.req;
 
+import io.github.hijun.agent.common.validation.UpdateGroup;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -14,10 +18,13 @@ import lombok.experimental.SuperBuilder;
  */
 @Data
 @SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public abstract class BaseForm {
 
     /**
      * id.
      */
+    @NotNull(groups = UpdateGroup.class)
     private Long id;
 }

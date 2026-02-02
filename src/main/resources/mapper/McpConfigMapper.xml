@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.hijun.agent.mapper.McpConfigMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="io.github.hijun.agent.entity.po.McpConfig">
+        <id column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="deleted" property="deleted"/>
+        <result column="server_name" property="serverName"/>
+        <result column="server_desc" property="serverDesc"/>
+        <result column="connection_type" property="connectionType"/>
+        <result column="command" property="command"/>
+        <result column="command_args" property="commandArgs"/>
+        <result column="command_env" property="commandEnv"/>
+        <result column="server_url" property="serverUrl"/>
+        <result column="server_endpoint" property="serverEndpoint"/>
+        <result column="request_timeout" property="requestTimeout"/>
+        <result column="enabled" property="enabled"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+</mapper>

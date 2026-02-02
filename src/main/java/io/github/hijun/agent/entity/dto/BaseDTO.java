@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  * 基础DTO类
@@ -36,15 +37,11 @@ public abstract class BaseDTO implements Serializable {
 
     /**
      * 创建时间
-     * <p>
-     * 记录创建该实体的时间戳（毫秒）
      */
-    private Long createTime;
+    private Date createTime;
 
     /**
      * 更新时间
-     * <p>
-     * 记录最后更新该实体的时间戳（毫秒）
      */
-    private Long updateTime;
+    private Date updateTime;
 }
