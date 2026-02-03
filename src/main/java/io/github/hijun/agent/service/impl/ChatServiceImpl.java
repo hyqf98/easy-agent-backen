@@ -107,7 +107,7 @@ public class ChatServiceImpl implements ChatService {
         CompletableFuture.runAsync(() -> {
             try {
                 ReActLLM reActLLM = new DataCollectorAgent(chatClient, agentContext);
-                reActLLM.loop(userMessage);
+                reActLLM.run(userMessage);
             } catch (Exception e) {
                 log.error("创建流式聊天发生错误: {}", e.getMessage(), e);
                 agentContext.error(e);

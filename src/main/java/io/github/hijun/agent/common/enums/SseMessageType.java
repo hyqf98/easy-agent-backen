@@ -26,18 +26,16 @@ public enum SseMessageType implements BaseEnum<String> {
     TOOL_THROUGH("tool_through", "工具思考"),
 
     /**
+     * final answer.
+     */
+    FINAL_ANSWER("final_answer", "最终答案"),
+
+    /**
      * 工具调用开始
      *
      * @since 1.0.0-SNAPSHOT
      */
-    TOOL_CALL_START("tool_call_start", "工具调用开始"),
-
-    /**
-     * 工具调用结果
-     *
-     * @since 1.0.0-SNAPSHOT
-     */
-    TOOL_CALL_RESULT("tool_call_result", "工具调用结果"),
+    TOOL_CALL("tool_call", "工具调用开始"),
 
     /**
      * 内容流式输出

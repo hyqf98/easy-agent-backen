@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +37,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Validated
 public class LlmModelServiceImpl extends ServiceImpl<LlmModelMapper, LlmModel> implements LlmModelService {
 
     /**
@@ -96,35 +98,46 @@ public class LlmModelServiceImpl extends ServiceImpl<LlmModelMapper, LlmModel> i
     }
 
     /**
-     * Save Or Update
+     * Create
      *
      * @param form form
      * @return boolean
      * @since 1.0.0-SNAPSHOT
      */
     @Override
-    public boolean saveOrUpdate(LlmModelForm form) {
+    public boolean create(LlmModelForm form) {
         Assert.notNull(form, "表单数据不能为空");
-        Assert.hasText(form.getModelCode(), "模型编码不能为空");
-        Assert.hasText(form.getModelName(), "模型名称不能为空");
-        Assert.notNull(form.getProviderType(), "提供商类型不能为空");
-        Assert.hasText(form.getApiKey(), "API密钥不能为空");
-        Assert.notNull(form.getSupportTools(), "工具调用支持不能为空");
-        Assert.notNull(form.getSupportVision(), "视觉识别支持不能为空");
-        Assert.notNull(form.getEnabled(), "启用状态不能为空");
 
         // 检查 modelCode 是否重复
         LambdaQueryWrapper<LlmModel> checkWrapper = new LambdaQueryWrapper<>();
         checkWrapper.eq(LlmModel::getModelCode, form.getModelCode());
-        if (form.getId() != null) {
-            checkWrapper.ne(LlmModel::getId, form.getId());
-        }
         if (this.count(checkWrapper) > 0) {
             throw new BusinessException("模型编码已存在");
         }
 
         LlmModel entity = LlmModelConverter.INSTANCE.toPo(form);
-        return this.saveOrUpdate(entity);
+        return this.save(entity);
+    }
+
+    /**
+     * Update
+     *
+     * @param form form
+     * @return boolean
+     * @since 1.0.0-SNAPSHOT
+     */
+    @Override
+    public boolean update(LlmModelForm form) {
+        // 检查 modelCode 是否重复（排除自身）
+        LambdaQueryWrapper<LlmModel> checkWrapper = new LambdaQueryWrapper<>();
+        checkWrapper.eq(LlmModel::getModelCode, form.getModelCode())
+                .ne(LlmModel::getId, form.getId());
+        if (this.count(checkWrapper) > 0) {
+            throw new BusinessException("模型编码已存在");
+        }
+
+        LlmModel entity = LlmModelConverter.INSTANCE.toPo(form);
+        return this.updateById(entity);
     }
 
     /**

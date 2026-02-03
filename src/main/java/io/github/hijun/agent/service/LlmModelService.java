@@ -57,13 +57,22 @@ public interface LlmModelService extends IService<LlmModel> {
     List<LlmModelDTO> list(LlmModelQuery query);
 
     /**
-     * 保存或更新模型配置
+     * 新增模型配置
      *
      * @param form 表单实体
      * @return 是否成功
      * @since 1.0.0-SNAPSHOT
      */
-    boolean saveOrUpdate(LlmModelForm form);
+    boolean create(LlmModelForm form);
+
+    /**
+     * 修改模型配置
+     *
+     * @param form 表单实体
+     * @return 是否成功
+     * @since 1.0.0-SNAPSHOT
+     */
+    boolean update(LlmModelForm form);
 
     /**
      * 批量删除模型配置

@@ -113,26 +113,21 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
     /**
      * Update
      *
-     * @param id   id
      * @param form form
      * @return boolean
      * @since 1.0.0-SNAPSHOT
      */
     @Override
-    public boolean update(Long id, McpConfigForm form) {
-        Assert.notNull(id, "MCP配置ID不能为空");
-        Assert.notNull(form, "表单数据不能为空");
-
+    public boolean update(McpConfigForm form) {
         // 检查 serverName 是否重复
         LambdaQueryWrapper<McpConfig> checkWrapper = new LambdaQueryWrapper<>();
         checkWrapper.eq(McpConfig::getServerName, form.getServerName());
-        checkWrapper.ne(McpConfig::getId, id);
+        checkWrapper.ne(McpConfig::getId, form.getId());
         if (this.count(checkWrapper) > 0) {
             throw new BusinessException("服务器名称已存在");
         }
 
         McpConfig entity = McpConfigConverter.INSTANCE.toPo(form);
-        entity.setId(id);
         return this.updateById(entity);
     }
 

@@ -91,14 +91,13 @@ public class McpConfigController {
     /**
      * 修改MCP配置
      *
-     * @param id   主键ID
      * @param form 表单实体
      * @since 1.0.0-SNAPSHOT
      */
-    @PutMapping("/{id}")
+    @PutMapping
     @Operation(summary = "修改MCP配置", description = "修改指定的MCP配置")
-    public void update(@PathVariable Long id, @Validated({UpdateGroup.class, Default.class}) @RequestBody McpConfigForm form) {
-        this.mcpConfigService.update(id, form);
+    public void update(@Validated({UpdateGroup.class, Default.class}) @RequestBody McpConfigForm form) {
+        this.mcpConfigService.update(form);
     }
 
     /**

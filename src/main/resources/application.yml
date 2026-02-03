@@ -4,26 +4,15 @@ spring:
   application:
     name: AgentServer
   datasource:
-    url: jdbc:mysql://192.168.3.10:3306/easy-agent?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://mysql.server:3306/easy-agent?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&allowMultiQueries=true&allowPublicKeyRetrieval=true&useSSL=false
     username: zhxx
-    password: zhxx@1234456
+    password: zhxx@123456
   prompt:
     max-step: 30
 
-# 自定义模型配置（不使用Spring AI自动配置）
-agent:
-  model:
-    # 默认模型提供商
-    default-provider: openai
-    # OpenAI 配置
-    openai:
-      api-key: 123
-      base-url: http://192.168.3.10:10000
-      model: Qwen3-Coder-30b-A3B-Instruct
-      temperature: 0.7
-      max-tokens: 2000
 mybatis-plus:
   global-config:
     db-config:
       logic-delete-field: deleted
       logic-delete-value: 1
+  mapper-locations: classpath:mapper/**.xml

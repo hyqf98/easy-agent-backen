@@ -4,10 +4,10 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.github.hijun.agent.common.enums.ConnectionType;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
 
@@ -19,9 +19,11 @@ import java.io.Serializable;
  * @author haijun
  * @version 1.0.0-SNAPSHOT
  * @since 1.0.0-SNAPSHOT
+ * @email "mailto:iamxiaohaijun@gmail.com"
+ * @date 2026/2/3 13:47
  */
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)

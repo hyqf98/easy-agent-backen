@@ -18,6 +18,8 @@ import java.util.List;
  * @author haijun
  * @version 1.0.0-SNAPSHOT
  * @since 1.0.0-SNAPSHOT
+ * @email "mailto:iamxiaohaijun@gmail.com"
+ * @date 2026/2/3 13:35
  */
 @Data
 @NoArgsConstructor
@@ -49,7 +51,6 @@ public class UserChatRequest {
      * 请求ID
      */
     @Schema(description = "请求ID")
-    @NotBlank(message = "请求ID不能为空")
     private String requestId;
 
     /**

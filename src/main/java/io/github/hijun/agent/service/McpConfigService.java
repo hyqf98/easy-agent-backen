@@ -54,12 +54,11 @@ public interface McpConfigService extends IService<McpConfig> {
     /**
      * 修改MCP配置
      *
-     * @param id 主键ID
      * @param form 表单实体
      * @return 是否成功
      * @since 1.0.0-SNAPSHOT
      */
-    boolean update(Long id, McpConfigForm form);
+    boolean update(McpConfigForm form);
 
     /**
      * 批量删除MCP配置

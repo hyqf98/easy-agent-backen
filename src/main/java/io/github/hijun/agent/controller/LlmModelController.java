@@ -1,6 +1,7 @@
 package io.github.hijun.agent.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import io.github.hijun.agent.common.validation.UpdateGroup;
 import io.github.hijun.agent.entity.dto.LlmModelDTO;
 import io.github.hijun.agent.entity.req.LlmModelForm;
 import io.github.hijun.agent.entity.req.LlmModelQuery;
@@ -14,10 +15,12 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.groups.Default;
 import java.util.List;
 
 /**
@@ -32,6 +35,7 @@ import java.util.List;
  * @date 2026/2/2 17:04
  */
 @Slf4j
+@Validated
 @RestController
 @RequestMapping("/model")
 @RequiredArgsConstructor
@@ -96,15 +100,27 @@ public class LlmModelController {
     }
 
     /**
-     * 保存或更新模型配置
+     * 新增模型配置
      *
      * @param form 表单实体
      * @since 1.0.0-SNAPSHOT
      */
-    @PostMapping("/save")
-    @Operation(summary = "保存或更新模型配置", description = "新增或更新模型配置，根据ID判断是新增还是更新")
-    public void save(@Validated @RequestBody LlmModelForm form) {
-        this.llmModelService.saveOrUpdate(form);
+    @PostMapping
+    @Operation(summary = "新增模型配置", description = "新增模型配置")
+    public void create(@Validated @RequestBody LlmModelForm form) {
+        this.llmModelService.create(form);
+    }
+
+    /**
+     * 修改模型配置
+     *
+     * @param form 表单实体
+     * @since 1.0.0-SNAPSHOT
+     */
+    @PutMapping
+    @Operation(summary = "修改模型配置", description = "修改指定的模型配置")
+    public void update(@Validated({UpdateGroup.class, Default.class}) @RequestBody LlmModelForm form) {
+        this.llmModelService.update(form);
     }
 
     /**

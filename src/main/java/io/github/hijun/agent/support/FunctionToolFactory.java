@@ -1,12 +1,15 @@
 package io.github.hijun.agent.support;
 
 import io.github.hijun.agent.service.McpConfigService;
+import io.github.hijun.agent.tools.OrderTools;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.ai.support.ToolCallbacks;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -46,9 +49,7 @@ public class FunctionToolFactory {
      * @since 1.0.0-SNAPSHOT
      */
     public List<ToolCallback> getBuiltinTools() {
-        // 内置工具暂时为空，FileTools 的 @Tool 注解方式需要通过不同的方式获取
-        // 可以考虑使用 Spring AI 的 ToolReference 或者自定义注册方式
-        return List.of();
+        return Arrays.asList(ToolCallbacks.from(new OrderTools()));
     }
 
     /**
