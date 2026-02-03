@@ -85,9 +85,11 @@ public class AgentContext {
      *
      * @param type    消息类型
      * @param content 消息内容
+     * @param messageId message id
      * @since 1.0.0-SNAPSHOT
      */
-    public void sendMessage(SseMessageType type,
+    public void sendMessage(String messageId,
+                            SseMessageType type,
                             Object content) {
         SseMessage<?> sseMessage = SseMessage.builder()
                 .sessionId(this.sessionId)

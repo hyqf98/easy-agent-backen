@@ -45,12 +45,14 @@ public class UserChatRequest {
      * 会话ID（可选，用于多轮对话）
      */
     @Schema(description = "会话ID", example = "session-123")
+    @NotBlank(message = "会话ID不能为空")
     private String sessionId;
 
     /**
      * 请求ID
      */
     @Schema(description = "请求ID")
+    @NotBlank(message = "请求ID不能为空")
     private String requestId;
 
     /**

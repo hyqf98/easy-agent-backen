@@ -12,7 +12,7 @@ import org.springframework.ai.chat.client.ChatClient;
  * @date 2026/2/3 11:33
  * @since 1.0.0-SNAPSHOT
  */
-public class MultiAgent extends ReActLLM {
+public class MultiCollaborationAgent extends ReActLLM {
     /**
      * ReAct LLM
      *
@@ -20,8 +20,8 @@ public class MultiAgent extends ReActLLM {
      * @param agentContext agent context
      * @since 1.0.0-SNAPSHOT
      */
-    public MultiAgent(ChatClient chatClient,
-                      AgentContext agentContext) {
+    public MultiCollaborationAgent(ChatClient chatClient,
+                                   AgentContext agentContext) {
         super(chatClient, "", "", agentContext);
     }
 }

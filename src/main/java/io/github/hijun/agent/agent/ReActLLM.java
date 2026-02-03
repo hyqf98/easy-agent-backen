@@ -10,8 +10,10 @@ import io.github.hijun.agent.entity.sse.TextMessage;
 import io.github.hijun.agent.entity.sse.ToolCallMessage;
 import io.github.hijun.agent.utils.StreamTagParser;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -31,6 +33,7 @@ import reactor.core.publisher.Flux;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -41,7 +44,7 @@ import java.util.concurrent.CompletableFuture;
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT
- * @email "mailto:zhonghaijun@zhxx.com"
+ * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026.01.30 18:14
  * @since 1.0.0-SNAPSHOT
  */
@@ -58,17 +61,17 @@ public abstract class ReActLLM extends BaseLLM {
     /**
      * agent context.
      */
-    private final AgentContext agentContext;
+    protected final AgentContext agentContext;
 
     /**
      * tool callback resolver.
      */
-    private final ToolCallbackResolver toolCallbackResolver;
+    protected final ToolCallbackResolver toolCallbackResolver;
 
     /**
      * max step.
      */
-    private Integer maxStep = MAX_RETRY_TIMES;
+    protected Integer maxStep = MAX_RETRY_TIMES;
 
     /**
      * system prompt.
@@ -83,12 +86,12 @@ public abstract class ReActLLM extends BaseLLM {
     /**
      * agent status.
      */
-    private AgentStatus agentStatus;
+    protected AgentStatus agentStatus;
 
     /**
      * concurrent step.
      */
-    private Integer concurrentStep = 0;
+    protected Integer concurrentStep = 0;
 
 
     /**
@@ -133,6 +136,7 @@ public abstract class ReActLLM extends BaseLLM {
             // 循环执行直到达到停止条件
             while (this.concurrentStep < this.maxStep && this.agentStatus == AgentStatus.RUNNING) {
                 try {
+                    String messageId = "messageId-" + UUID.randomUUID();
                     // 增加步数
                     this.concurrentStep++;
                     log.debug("ReAct 步骤: {}/{}", this.concurrentStep, this.maxStep);
@@ -141,14 +145,14 @@ public abstract class ReActLLM extends BaseLLM {
                         messages.add(nextMessage);
                     }
 
-                    List<ToolCall> toolThought = this.think(messages);
+                    List<ToolCall> toolThought = this.think(messageId, messages);
                     if (CollectionUtil.isEmpty(toolThought)) {
                         // 内容进行总结响应
                         this.summary(messages);
                         this.agentStatus = AgentStatus.FINISHED;
                         break;
                     }
-                    List<ToolResponse> toolResponses = this.action(toolThought);
+                    List<ToolResponse> toolResponses = this.action(messageId, toolThought);
                     if (CollectionUtil.isNotEmpty(toolResponses)) {
                         ToolResponseMessage responseMessage = ToolResponseMessage.builder()
                                 .responses(toolResponses)
@@ -199,10 +203,11 @@ public abstract class ReActLLM extends BaseLLM {
      * 返回 false 表示应该停止循环
      *
      * @param messages messages
+     * @param messageId message id
      * @return true 继续执行，false 停止执行
      * @since 1.0.0-SNAPSHOT
      */
-    public List<ToolCall> think(List<Message> messages) {
+    private List<ToolCall> think(String messageId, List<Message> messages) {
         List<ToolCall> list = new ArrayList<>();
         Flux<ChatResponse> responseFlux = this.callLLM(messages, this.agentContext.getToolCallbacks(), false);
         StreamTagParser streamTagParser = new StreamTagParser();
@@ -238,11 +243,21 @@ public abstract class ReActLLM extends BaseLLM {
                             .text(contentToSend)
                             .modelName("")
                             .build();
-                    this.agentContext.sendMessage(sseMessageType, textMessage);
+                    this.agentContext.sendMessage(messageId, sseMessageType, textMessage);
                 }
             }
         }).blockLast();
         return list;
+    }
+
+    /**
+     * Do Think
+     *
+     * @param chatResponse chat response
+     * @since 1.0.0-SNAPSHOT
+     */
+    protected void doThink(ChatResponse chatResponse) {
+
     }
 
     /**
@@ -251,10 +266,11 @@ public abstract class ReActLLM extends BaseLLM {
      * 子类需要实现具体的行动逻辑
      *
      * @param toolCalls tool calls
+     * @param messageId message id
      * @return list
      * @since 1.0.0-SNAPSHOT
      */
-    public List<ToolResponse> action(List<ToolCall> toolCalls) {
+    private List<ToolResponse> action(String messageId, List<ToolCall> toolCalls) {
         List<FunctionResponseFuture> toolCallTasks = toolCalls.stream().map(toolCall -> {
             String id = toolCall.id();
             String arguments = toolCall.arguments();
@@ -272,7 +288,7 @@ public abstract class ReActLLM extends BaseLLM {
                         .name(name)
                         .status(ToolStatus.CALLING)
                         .build();
-                this.agentContext.sendMessage(SseMessageType.TOOL_CALL, toolCallMessage);
+                this.agentContext.sendMessage(messageId, SseMessageType.TOOL_CALL, toolCallMessage);
                 return new ToolResponse(id, name, toolCallback.call(arguments));
             }).exceptionally(e -> {
                 ToolCallMessage toolCallMessage = ToolCallMessage
@@ -283,7 +299,7 @@ public abstract class ReActLLM extends BaseLLM {
                         .status(ToolStatus.FAILED)
                         .errorMessage(e.getMessage())
                         .build();
-                this.agentContext.sendMessage(SseMessageType.TOOL_CALL, toolCallMessage);
+                this.agentContext.sendMessage(messageId, SseMessageType.TOOL_CALL, toolCallMessage);
                 return new ToolResponse(id, name, e.getMessage());
             });
             return new FunctionResponseFuture(id, name, type, arguments, future);
@@ -306,13 +322,41 @@ public abstract class ReActLLM extends BaseLLM {
                         .result(toolResponse.responseData())
                         .status(ToolStatus.SUCCESS)
                         .build();
-                this.agentContext.sendMessage(SseMessageType.TOOL_CALL, toolCallMessage);
+                this.agentContext.sendMessage(messageId, SseMessageType.TOOL_CALL, toolCallMessage);
                 return toolResponse;
             } catch (Exception e) {
                 log.error("工具结果获取异常:", e);
                 return new ToolResponse(id, name, e.getMessage());
             }
         }).toList();
+    }
+
+
+    /**
+     * Action Before
+     *
+     * @since 1.0.0-SNAPSHOT
+     */
+    protected void actionBefore() {
+
+    }
+
+    /**
+     * Action After
+     *
+     * @since 1.0.0-SNAPSHOT
+     */
+    private void actionAfter() {
+
+    }
+
+    /**
+     * Action Error
+     *
+     * @since 1.0.0-SNAPSHOT
+     */
+    private void actionError() {
+
     }
 
     /**
@@ -349,5 +393,25 @@ public abstract class ReActLLM extends BaseLLM {
          * result future.
          */
         private CompletableFuture<ToolResponse> resultFuture;
+    }
+
+
+    /**
+     * Inner Agent Context
+     *
+     * @author haijun
+     * @date 2026/2/3 20:22
+     * @version 1.0.0-SNAPSHOT
+     * @since 1.0.0-SNAPSHOT
+     */
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    protected static class InnerAgentContext {
+        /**
+         * message id.
+         */
+        private String messageId;
     }
 }

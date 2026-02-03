@@ -29,6 +29,11 @@ public class SseMessage<T> {
     private String requestId;
 
     /**
+     * message id.
+     */
+    private String messageId;
+
+    /**
      * type.
      */
     private SseMessageType type;
