@@ -23,6 +23,8 @@ import reactor.core.publisher.Flux;
  * @author haijun
  * @version 1.0.0-SNAPSHOT
  * @since 1.0.0-SNAPSHOT
+ * @email "mailto:iamxiaohaijun@gmail.com"
+ * @date 2026/2/4 14:25
  */
 @Slf4j
 @RestController
@@ -48,6 +50,8 @@ public class ChatController {
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "流式聊天", description = "以SSE格式返回大模型的流式响应")
     public Flux<SseMessage<?>> stream(@Valid @RequestBody UserChatRequest form) {
+        log.info("收到流式聊天请求: modelId={}, message={}, sessionId={}, requestId={}, toolIds={}",
+                form.getModelId(), form.getMessage(), form.getSessionId(), form.getRequestId(), form.getToolIds());
         return this.chatService.streamChat(form);
     }
 }

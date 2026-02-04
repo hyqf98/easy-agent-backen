@@ -1,19 +1,13 @@
 package io.github.hijun.agent.agent;
 
 import cn.hutool.core.collection.CollectionUtil;
-import io.github.hijun.agent.common.constant.AgentConstants;
 import io.github.hijun.agent.common.enums.AgentStatus;
 import io.github.hijun.agent.common.enums.SseMessageType;
-import io.github.hijun.agent.common.enums.ToolStatus;
 import io.github.hijun.agent.entity.AgentContext;
 import io.github.hijun.agent.entity.sse.TextMessage;
-import io.github.hijun.agent.entity.sse.ToolCallMessage;
-import io.github.hijun.agent.utils.StreamTagParser;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -136,8 +130,6 @@ public abstract class ReActLLM extends BaseLLM {
             // 循环执行直到达到停止条件
             while (this.concurrentStep < this.maxStep && this.agentStatus == AgentStatus.RUNNING) {
                 try {
-                    String messageId = "messageId-" + UUID.randomUUID();
-                    // 增加步数
                     this.concurrentStep++;
                     log.debug("ReAct 步骤: {}/{}", this.concurrentStep, this.maxStep);
                     if (!this.lastMessageIsUser(messages)) {
@@ -145,14 +137,14 @@ public abstract class ReActLLM extends BaseLLM {
                         messages.add(nextMessage);
                     }
 
-                    List<ToolCall> toolThought = this.think(messageId, messages);
+                    List<ToolCall> toolThought = this.think(messages);
                     if (CollectionUtil.isEmpty(toolThought)) {
                         // 内容进行总结响应
                         this.summary(messages);
                         this.agentStatus = AgentStatus.FINISHED;
                         break;
                     }
-                    List<ToolResponse> toolResponses = this.action(messageId, toolThought);
+                    List<ToolResponse> toolResponses = this.action(toolThought);
                     if (CollectionUtil.isNotEmpty(toolResponses)) {
                         ToolResponseMessage responseMessage = ToolResponseMessage.builder()
                                 .responses(toolResponses)
@@ -202,62 +194,27 @@ public abstract class ReActLLM extends BaseLLM {
      * 子类需要实现具体的思考逻辑
      * 返回 false 表示应该停止循环
      *
-     * @param messages messages
-     * @param messageId message id
+     * @param messages  messages
      * @return true 继续执行，false 停止执行
      * @since 1.0.0-SNAPSHOT
      */
-    private List<ToolCall> think(String messageId, List<Message> messages) {
+    protected List<ToolCall> think(List<Message> messages) {
         List<ToolCall> list = new ArrayList<>();
+        String messageId = UUID.randomUUID().toString();
         Flux<ChatResponse> responseFlux = this.callLLM(messages, this.agentContext.getToolCallbacks(), false);
-        StreamTagParser streamTagParser = new StreamTagParser();
         responseFlux.doOnNext(chatResponse -> {
             AssistantMessage assistantMessage = chatResponse.getResult().getOutput();
             if (assistantMessage.hasToolCalls()) {
                 list.addAll(assistantMessage.getToolCalls());
             }
             String text = assistantMessage.getText();
-            if (text != null && !text.isEmpty()) {
-                // 2. 使用流式解析器解析文本
-                List<StreamTagParser.ParseResult> results = streamTagParser.parse(text);
-                for (StreamTagParser.ParseResult result : results) {
-                    String contentToSend = result.content();
-                    if (contentToSend == null || contentToSend.isEmpty()) {
-                        continue;
-                    }
-                    SseMessageType sseMessageType;
-                    switch (result.type()) {
-                        case AgentConstants.AgentContentType.FINAL_ANSWER:
-                            sseMessageType = SseMessageType.FINAL_ANSWER;
-                            this.agentStatus = AgentStatus.FINISHED;
-                            break;
-                        case AgentConstants.AgentContentType.THINK:
-                            sseMessageType = SseMessageType.THINKING;
-                            break;
-                        default:
-                            sseMessageType = SseMessageType.TOOL_THROUGH;
-                            break;
-                    }
-                    // 发送消息
-                    TextMessage textMessage = TextMessage.builder()
-                            .text(contentToSend)
-                            .modelName("")
-                            .build();
-                    this.agentContext.sendMessage(messageId, sseMessageType, textMessage);
-                }
-            }
+            TextMessage textMessage = TextMessage.builder()
+                    .text(text)
+                    .modelName(this.agentContext.getLlmModel().getModelName())
+                    .build();
+            this.agentContext.sendMessage(messageId, SseMessageType.CONTENT_CHUNK, textMessage);
         }).blockLast();
         return list;
-    }
-
-    /**
-     * Do Think
-     *
-     * @param chatResponse chat response
-     * @since 1.0.0-SNAPSHOT
-     */
-    protected void doThink(ChatResponse chatResponse) {
-
     }
 
     /**
@@ -266,11 +223,10 @@ public abstract class ReActLLM extends BaseLLM {
      * 子类需要实现具体的行动逻辑
      *
      * @param toolCalls tool calls
-     * @param messageId message id
      * @return list
      * @since 1.0.0-SNAPSHOT
      */
-    private List<ToolResponse> action(String messageId, List<ToolCall> toolCalls) {
+    protected List<ToolResponse> action(List<ToolCall> toolCalls) {
         List<FunctionResponseFuture> toolCallTasks = toolCalls.stream().map(toolCall -> {
             String id = toolCall.id();
             String arguments = toolCall.arguments();
@@ -281,27 +237,8 @@ public abstract class ReActLLM extends BaseLLM {
                 if (toolCallback == null) {
                     throw new NullPointerException("未找到名称为:[" + name + "]，的函数工具");
                 }
-                ToolCallMessage toolCallMessage = ToolCallMessage
-                        .builder()
-                        .id(id)
-                        .type(type)
-                        .name(name)
-                        .status(ToolStatus.CALLING)
-                        .build();
-                this.agentContext.sendMessage(messageId, SseMessageType.TOOL_CALL, toolCallMessage);
                 return new ToolResponse(id, name, toolCallback.call(arguments));
-            }).exceptionally(e -> {
-                ToolCallMessage toolCallMessage = ToolCallMessage
-                        .builder()
-                        .id(id)
-                        .type(type)
-                        .name(name)
-                        .status(ToolStatus.FAILED)
-                        .errorMessage(e.getMessage())
-                        .build();
-                this.agentContext.sendMessage(messageId, SseMessageType.TOOL_CALL, toolCallMessage);
-                return new ToolResponse(id, name, e.getMessage());
-            });
+            }).exceptionally(e -> new ToolResponse(id, name, e.getMessage()));
             return new FunctionResponseFuture(id, name, type, arguments, future);
         }).toList();
         CompletableFuture[] array = toolCallTasks.stream()
@@ -313,17 +250,7 @@ public abstract class ReActLLM extends BaseLLM {
             String name = task.getName();
             String inputParams = task.getInputParams();
             try {
-                ToolResponse toolResponse = task.getResultFuture().get();
-                ToolCallMessage toolCallMessage = ToolCallMessage
-                        .builder()
-                        .id(id)
-                        .name(name)
-                        .params(inputParams)
-                        .result(toolResponse.responseData())
-                        .status(ToolStatus.SUCCESS)
-                        .build();
-                this.agentContext.sendMessage(messageId, SseMessageType.TOOL_CALL, toolCallMessage);
-                return toolResponse;
+                return task.getResultFuture().get();
             } catch (Exception e) {
                 log.error("工具结果获取异常:", e);
                 return new ToolResponse(id, name, e.getMessage());
@@ -331,33 +258,6 @@ public abstract class ReActLLM extends BaseLLM {
         }).toList();
     }
 
-
-    /**
-     * Action Before
-     *
-     * @since 1.0.0-SNAPSHOT
-     */
-    protected void actionBefore() {
-
-    }
-
-    /**
-     * Action After
-     *
-     * @since 1.0.0-SNAPSHOT
-     */
-    private void actionAfter() {
-
-    }
-
-    /**
-     * Action Error
-     *
-     * @since 1.0.0-SNAPSHOT
-     */
-    private void actionError() {
-
-    }
 
     /**
      * Function Response Future
@@ -370,7 +270,7 @@ public abstract class ReActLLM extends BaseLLM {
      */
     @Data
     @AllArgsConstructor
-    private static final class FunctionResponseFuture {
+    protected static final class FunctionResponseFuture {
         /**
          * id.
          */
@@ -393,25 +293,5 @@ public abstract class ReActLLM extends BaseLLM {
          * result future.
          */
         private CompletableFuture<ToolResponse> resultFuture;
-    }
-
-
-    /**
-     * Inner Agent Context
-     *
-     * @author haijun
-     * @date 2026/2/3 20:22
-     * @version 1.0.0-SNAPSHOT
-     * @since 1.0.0-SNAPSHOT
-     */
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    @Builder
-    protected static class InnerAgentContext {
-        /**
-         * message id.
-         */
-        private String messageId;
     }
 }

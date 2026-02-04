@@ -1,5 +1,6 @@
 server:
   port: 20000
+
 spring:
   application:
     name: AgentServer
@@ -15,4 +16,14 @@ mybatis-plus:
     db-config:
       logic-delete-field: deleted
       logic-delete-value: 1
-  mapper-locations: classpath:mapper/**.xml
+      mapper-locations: classpath:mapper/**.xml
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    io.github.hijun.agent: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.ai: DEBUG
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n'

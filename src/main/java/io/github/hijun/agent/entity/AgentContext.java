@@ -1,6 +1,7 @@
 package io.github.hijun.agent.entity;
 
 import io.github.hijun.agent.common.enums.SseMessageType;
+import io.github.hijun.agent.entity.dto.LlmModelDTO;
 import io.github.hijun.agent.entity.sse.SseMessage;
 import io.github.hijun.agent.entity.sse.TextMessage;
 import lombok.Data;
@@ -35,6 +36,11 @@ public class AgentContext {
     private final Sinks.Many<SseMessage<?>> sink;
 
     /**
+     * llm model.
+     */
+    private final LlmModelDTO llmModel;
+
+    /**
      * 会话 ID
      */
     private final String sessionId;
@@ -66,12 +72,15 @@ public class AgentContext {
      * @param sink      SSE 消息 Sink
      * @param sessionId 会话 ID
      * @param requestId request id
+     * @param llmModelDTO llm model d t o
      * @since 1.0.0-SNAPSHOT
      */
     public AgentContext(Sinks.Many<SseMessage<?>> sink,
+                        LlmModelDTO llmModelDTO,
                         String sessionId,
                         String requestId) {
         this.sink = sink;
+        this.llmModel = llmModelDTO;
         this.sessionId = sessionId;
         this.requestId = requestId;
 
@@ -83,8 +92,8 @@ public class AgentContext {
     /**
      * 发送消息（内部方法）
      *
-     * @param type    消息类型
-     * @param content 消息内容
+     * @param type      消息类型
+     * @param content   消息内容
      * @param messageId message id
      * @since 1.0.0-SNAPSHOT
      */
@@ -94,6 +103,7 @@ public class AgentContext {
         SseMessage<?> sseMessage = SseMessage.builder()
                 .sessionId(this.sessionId)
                 .requestId(this.requestId)
+                .messageId(messageId)
                 .content(content)
                 .type(type)
                 .build();
@@ -137,7 +147,7 @@ public class AgentContext {
      */
     public void complete() {
         TextMessage done = TextMessage.builder().text("DONE").build();
-        this.sendMessage(SseMessageType.COMPLETED, done);
+        this.sendMessage("", SseMessageType.COMPLETED, done);
         this.sink.tryEmitComplete();
     }
 
@@ -149,7 +159,7 @@ public class AgentContext {
      */
     public void error(Throwable error) {
         TextMessage done = TextMessage.builder().text(error.getMessage()).build();
-        this.sendMessage(SseMessageType.ERROR, done);
+        this.sendMessage("", SseMessageType.ERROR, done);
         this.sink.tryEmitError(error);
     }
 }

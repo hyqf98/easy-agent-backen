@@ -1,16 +1,18 @@
 package io.github.hijun.agent.agent;
 
-import cn.hutool.core.util.StrUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
+import org.springframework.ai.template.TemplateRenderer;
+import org.springframework.ai.template.ValidationMode;
+import org.springframework.ai.template.st.StTemplateRenderer;
 import org.springframework.ai.tool.ToolCallback;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Base L L M
@@ -31,15 +33,34 @@ public abstract class BaseLLM {
     protected final ChatClient chatClient;
 
     /**
+     * template renderer.
+     */
+    protected final TemplateRenderer templateRenderer;
+
+    /**
      * Base L L M
      *
      * @param chatClient chat client
      * @since 1.0.0-SNAPSHOT
      */
     public BaseLLM(ChatClient chatClient) {
-        this.chatClient = chatClient;
+        this(chatClient, new StTemplateRenderer('{',
+                '}',
+                ValidationMode.WARN,
+                false));
     }
 
+    /**
+     * Base L L M
+     *
+     * @param chatClient chat client
+     * @param templateRenderer template renderer
+     * @since 1.0.0-SNAPSHOT
+     */
+    public BaseLLM(ChatClient chatClient, TemplateRenderer templateRenderer) {
+        this.chatClient = chatClient;
+        this.templateRenderer = templateRenderer;
+    }
 
     /**
      * CallLLM
@@ -62,6 +83,7 @@ public abstract class BaseLLM {
         return this.chatClient.prompt()
                 .options(callingChatOptions)
                 .messages(messages)
+                .templateRenderer(this.templateRenderer)
                 .stream()
                 .chatResponse()
                 .doOnError(throwable -> log.error("LLM call error: {}", throwable.getMessage()))
@@ -84,19 +106,27 @@ public abstract class BaseLLM {
                          boolean enableToolCall,
                          Class<T> clazz) {
 
-        Flux<ChatResponse> flux = this.callLLM(messages, toolCallbacks, enableToolCall);
-        ChatResponse chatResponse = flux.blockLast();
-        if (chatResponse == null) {
-            return null;
-        }
-        String blockedLast = chatResponse.getResult().getOutput().getText();
-        if (StrUtil.isBlank(blockedLast)) {
-            return null;
-        }
-        if (clazz == String.class) {
-            return (T) blockedLast;
-        }
-        BeanOutputConverter<T> outputConverter = new BeanOutputConverter<>(clazz);
-        return outputConverter.convert(blockedLast);
+        ToolCallingChatOptions callingChatOptions = ToolCallingChatOptions.builder()
+                .internalToolExecutionEnabled(enableToolCall)
+                .toolCallbacks(toolCallbacks)
+                .build();
+
+        return this.chatClient
+                .prompt()
+                .options(callingChatOptions)
+                .templateRenderer(this.templateRenderer)
+                .messages(messages)
+                .call()
+                .entity(clazz);
+    }
+
+    /**
+     * Get Template Context
+     *
+     * @return map
+     * @since 1.0.0-SNAPSHOT
+     */
+    protected Map<String, Object> getTemplateContext() {
+        return Map.of();
     }
 }

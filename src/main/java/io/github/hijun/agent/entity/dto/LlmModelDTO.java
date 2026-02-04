@@ -3,10 +3,10 @@ package io.github.hijun.agent.entity.dto;
 import io.github.hijun.agent.common.enums.ModelProvider;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 /**
  * 大语言模型配置 DTO
@@ -16,9 +16,11 @@ import lombok.NoArgsConstructor;
  * @author haijun
  * @version 1.0.0-SNAPSHOT
  * @since 1.0.0-SNAPSHOT
+ * @email "mailto:iamxiaohaijun@gmail.com"
+ * @date 2026/2/4 13:16
  */
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
