@@ -33,7 +33,8 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BusinessException.class)
     public Result<?> handleBusinessException(BusinessException e, HttpServletRequest request) {
-        log.warn("业务异常: URI={}, {}", request.getRequestURI(), e.getMessage());
+        // 只记录关键信息，不打印完整堆栈
+        log.info("业务异常: URI={}, message={}", request.getRequestURI(), e.getMessage());
         return Result.error(e.getCode(), e.getMessage());
     }
 

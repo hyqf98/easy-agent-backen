@@ -1,7 +1,6 @@
 package io.github.hijun.agent.agent;
 
 import io.github.hijun.agent.common.constant.AgentConstants;
-import io.github.hijun.agent.common.enums.AgentStatus;
 import io.github.hijun.agent.common.enums.SseMessageType;
 import io.github.hijun.agent.common.enums.ToolStatus;
 import io.github.hijun.agent.entity.AgentContext;
@@ -50,12 +49,12 @@ public class DataCollectorAgent extends ReActLLM {
     public DataCollectorAgent(ChatClient chatClient,
                               AgentContext agentContext) {
         super(chatClient,
-                AgentConstants.ReAct.SYSTEM_PROMPT,
+                AgentConstants.DataCollectorAgent.SYSTEM_PROMPT,
                 AgentConstants.ReAct.NEXT_STEP_PROMPT,
                 agentContext);
         this.streamTagParser = new StreamTagParser();
         this.streamTagParser.register("<think>", "</think>", AgentConstants.AgentContentType.THINK);
-        this.streamTagParser.register("<Final Answer>", "</Final Answer>", AgentConstants.AgentContentType.FINAL_ANSWER);
+        this.streamTagParser.register("<ToolThrough>", "</ToolThrough>", AgentConstants.AgentContentType.TOOL_THROUGH);
     }
 
     /**
@@ -87,15 +86,11 @@ public class DataCollectorAgent extends ReActLLM {
                         continue;
                     }
                     switch (result.type()) {
-                        case AgentConstants.AgentContentType.FINAL_ANSWER:
-                            sseMessageType.set(SseMessageType.FINAL_ANSWER);
-                            this.agentStatus = AgentStatus.FINISHED;
+                        case AgentConstants.AgentContentType.TOOL_THROUGH:
+                            sseMessageType.set(SseMessageType.TOOL_THROUGH);
                             break;
                         case AgentConstants.AgentContentType.THINK:
                             sseMessageType.set(SseMessageType.THINKING);
-                            break;
-                        default:
-                            sseMessageType.set(SseMessageType.TOOL_THROUGH);
                             break;
                     }
                     // 发送消息
@@ -107,14 +102,12 @@ public class DataCollectorAgent extends ReActLLM {
                 }
             }
         }).blockLast();
-
         // 发送消息
         TextMessage textMessage = TextMessage.builder()
-                .text("DONE")
+                .text("<DONE>")
                 .modelName(this.agentContext.getLlmModel().getModelName())
                 .build();
         this.agentContext.sendMessage(messageId, sseMessageType.get(), textMessage);
-
         return list;
     }
 

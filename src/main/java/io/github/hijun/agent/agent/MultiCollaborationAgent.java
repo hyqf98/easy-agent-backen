@@ -1,8 +1,11 @@
 package io.github.hijun.agent.agent;
 
+import cn.hutool.core.annotation.AnnotationUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import io.github.hijun.agent.annotations.Agent;
 import io.github.hijun.agent.common.constant.AgentConstants;
 import io.github.hijun.agent.entity.AgentContext;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +17,8 @@ import org.springframework.ai.chat.messages.ToolResponseMessage;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.StringJoiner;
 
 /**
  * Multi Agent
@@ -50,6 +55,36 @@ public class MultiCollaborationAgent extends ReActLLM {
         this.agents.add(new DataCollectorAgent(chatClient, agentContext));
     }
 
+    /**
+     * Get Agent List
+     *
+     * @return string
+     * @since 1.0.0-SNAPSHOT
+     */
+    private String getAgentList() {
+        StringJoiner joiner = new StringJoiner("\n");
+        this.agents.forEach(agent -> {
+            Agent annotation = AnnotationUtil.getAnnotation(agent.getClass(), Agent.class);
+            if (annotation != null) {
+                joiner.add(annotation.value() + ":" + annotation.description());
+            }
+        });
+        return joiner.toString();
+    }
+
+    /**
+     * Get Template Context
+     *
+     * @return map
+     * @since 1.0.0-SNAPSHOT
+     */
+    @Override
+    protected Map<String, Object> getTemplateContext() {
+        Map<String, Object> context = super.getTemplateContext();
+        context.put("AgentList", this.getAgentList());
+        context.put("concurrentTime", DateUtil.now());
+        return context;
+    }
 
     /**
      * Think

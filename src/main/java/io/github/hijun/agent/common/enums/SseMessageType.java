@@ -31,6 +31,11 @@ public enum SseMessageType implements BaseEnum<String> {
     FINAL_ANSWER("final_answer", "最终答案"),
 
     /**
+     * report result.
+     */
+    REPORT_RESULT("report_result", "报告结果"),
+
+    /**
      * 工具调用开始
      *
      * @since 1.0.0-SNAPSHOT

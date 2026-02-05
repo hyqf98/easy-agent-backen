@@ -7,10 +7,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.github.hijun.agent.common.enums.ConnectionType;
 import io.github.hijun.agent.common.exception.BusinessException;
 import io.github.hijun.agent.converter.McpConfigConverter;
-import io.github.hijun.agent.entity.dto.CommandEnv;
 import io.github.hijun.agent.entity.dto.McpConfigDTO;
 import io.github.hijun.agent.entity.dto.McpPromptArgumentDTO;
 import io.github.hijun.agent.entity.dto.McpPromptDTO;
@@ -41,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
@@ -98,6 +98,7 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
     @Override
     public boolean create(McpConfigForm form) {
         Assert.notNull(form, "表单数据不能为空");
+        this.validateFormByConnectionType(form);
 
         // 检查 serverName 是否重复
         LambdaQueryWrapper<McpConfig> checkWrapper = new LambdaQueryWrapper<>();
@@ -119,6 +120,9 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
      */
     @Override
     public boolean update(McpConfigForm form) {
+        Assert.notNull(form, "表单数据不能为空");
+        this.validateFormByConnectionType(form);
+
         // 检查 serverName 是否重复
         LambdaQueryWrapper<McpConfig> checkWrapper = new LambdaQueryWrapper<>();
         checkWrapper.eq(McpConfig::getServerName, form.getServerName());
@@ -129,6 +133,30 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
 
         McpConfig entity = McpConfigConverter.INSTANCE.toPo(form);
         return this.updateById(entity);
+    }
+
+    /**
+     * Validate Form By Connection Type
+     * <p>
+     * 根据连接协议类型验证表单字段
+     *
+     * @param form 表单数据
+     * @since 1.0.0-SNAPSHOT
+     */
+    private void validateFormByConnectionType(McpConfigForm form) {
+        Assert.notNull(form.getConnectionType(), "连接协议类型不能为空");
+
+        switch (form.getConnectionType()) {
+            case STDIO -> {
+                Assert.hasText(form.getCommand(), "STDIO类型的命令不能为空");
+            }
+            case SSE -> {
+                Assert.hasText(form.getServerUrl(), "SSE类型的服务器URL不能为空");
+            }
+            case HTTP_STREAM -> {
+                Assert.hasText(form.getServerUrl(), "HTTP_STREAM类型的服务器URL不能为空");
+            }
+        }
     }
 
     /**
@@ -200,11 +228,9 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
         try (McpSyncClient client = this.createMcpClient(config)) {
             if (client != null) {
                 // 初始化连接
-                McpSchema.InitializeResult result = client.initialize();
-                log.info("MCP服务器连接测试成功: {}, 服务器: {}", config.getServerName(), result.serverInfo());
+                client.initialize();
             }
         } catch (Exception e) {
-            log.error("MCP服务器连接测试失败: {}", config.getServerName(), e);
             throw new BusinessException("连接测试失败: " + e.getMessage());
         }
     }
@@ -238,7 +264,6 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
                         .collect(Collectors.toList());
             }
         } catch (Exception e) {
-            log.error("获取MCP工具列表失败: {}", config.getServerName(), e);
             throw new BusinessException("获取工具列表失败: " + e.getMessage());
         }
 
@@ -275,10 +300,8 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
                         .collect(Collectors.toList());
             }
         } catch (Exception e) {
-            log.error("获取MCP资源列表失败: {}", config.getServerName(), e);
             throw new BusinessException("获取资源列表失败: " + e.getMessage());
         }
-
         return List.of();
     }
 
@@ -317,10 +340,8 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
                         .collect(Collectors.toList());
             }
         } catch (Exception e) {
-            log.error("获取MCP提示列表失败: {}", config.getServerName(), e);
             throw new BusinessException("获取提示列表失败: " + e.getMessage());
         }
-
         return List.of();
     }
 
@@ -346,7 +367,6 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
                 case HTTP_STREAM -> this.createHttpStreamClient(config);
             };
         } catch (Exception e) {
-            log.error("创建MCP客户端失败: {}", config.getServerName(), e);
             throw new BusinessException("创建MCP客户端失败: " + e.getMessage());
         }
     }
@@ -373,8 +393,7 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
         }
 
         // 解析环境变量
-        List<CommandEnv> envList = this.parseCommandEnv(config.getCommandEnv());
-        Map<String, String> env = this.toEnvMap(envList);
+        Map<String, String> env = this.parseCommandEnv(config.getCommandEnv());
         if (ObjectUtil.isNotEmpty(env)) {
             builder.env(env);
         }
@@ -382,7 +401,7 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
         ServerParameters params = builder.build();
 
         // 创建 STDIO 传输层，需要传入 McpJsonMapper
-        StdioClientTransport transport = new StdioClientTransport(params, new JacksonMcpJsonMapper(new ObjectMapper()));
+        StdioClientTransport transport = new StdioClientTransport(params, new JacksonMcpJsonMapper(Jsons.getObjectMapper()));
 
         // 构建客户端
         return McpClient
@@ -453,15 +472,15 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
     /**
      * Parse Command Env
      * <p>
-     * 解析环境变量 JSON 字符串为 CommandEnv 列表
+     * 解析环境变量 JSON 字符串为 Map
      *
      * @param commandEnv 环境变量 JSON 字符串
-     * @return CommandEnv 列表
+     * @return 环境变量 Map
      * @since 1.0.0-SNAPSHOT
      */
-    private List<CommandEnv> parseCommandEnv(String commandEnv) {
+    private Map<String, String> parseCommandEnv(String commandEnv) {
         if (StrUtil.isBlank(commandEnv)) {
-            return List.of();
+            return Map.of();
         }
 
         try {
@@ -471,26 +490,6 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
             log.error("解析环境变量失败: {}", commandEnv, e);
             throw new BusinessException("环境变量格式错误，必须是JSON对象格式");
         }
-    }
-
-    /**
-     * Convert CommandEnv List to Map
-     * <p>
-     * 将 CommandEnv 列表转换为 Map
-     *
-     * @param envList CommandEnv 列表
-     * @return 环境变量 Map
-     * @since 1.0.0-SNAPSHOT
-     */
-    private Map<String, String> toEnvMap(List<CommandEnv> envList) {
-        if (ObjectUtil.isEmpty(envList)) {
-            return Map.of();
-        }
-        return envList.stream()
-                .collect(java.util.stream.Collectors.toMap(
-                        CommandEnv::key,
-                        CommandEnv::value,
-                        (v1, v2) -> v1));
     }
 
     /**
@@ -523,5 +522,60 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
                         .like(McpConfig::getServerDesc, keyword)));
 
         return wrapper;
+    }
+
+    /**
+     * Build Friendly Error Message
+     * <p>
+     * 将原始异常转换为用户友好的错误信息
+     *
+     * @param config MCP配置
+     * @param e      异常
+     * @return 友好的错误信息
+     * @since 1.0.0-SNAPSHOT
+     */
+    private String buildFriendlyErrorMessage(McpConfig config, Exception e) {
+        // 获取根本原因
+        Throwable rootCause = this.getRootCause(e);
+
+        // 处理超时异常
+        if (rootCause instanceof TimeoutException) {
+            return "连接超时，服务器响应时间过长，请检查网络或增加超时时间";
+        }
+
+        // 处理进程终止异常
+        String message = rootCause.getMessage();
+        if (message != null && message.contains("Process terminated with code")) {
+            return "MCP进程异常终止，请检查命令配置是否正确";
+        }
+
+        // 处理初始化失败
+        if (message != null && message.contains("Client failed to initialize")) {
+            return config.getConnectionType() == ConnectionType.STDIO
+                    ? "STDIO进程启动失败，请检查命令和环境变量配置"
+                    : "服务器连接失败，请检查URL和网络配置";
+        }
+
+        // 其他异常返回简要信息
+        return rootCause.getMessage() != null
+                ? rootCause.getMessage()
+                : "未知错误";
+    }
+
+    /**
+     * Get Root Cause
+     * <p>
+     * 获取异常的根本原因
+     *
+     * @param e 异常
+     * @return 根本原因
+     * @since 1.0.0-SNAPSHOT
+     */
+    private Throwable getRootCause(Throwable e) {
+        Throwable cause = e;
+        while (cause.getCause() != null && cause.getCause() != cause) {
+            cause = cause.getCause();
+        }
+        return cause;
     }
 }

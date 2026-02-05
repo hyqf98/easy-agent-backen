@@ -53,7 +53,6 @@ public class McpConfigForm extends BaseForm {
     /**
      * command.
      */
-    @NotBlank(message = "STDIO命令不能为空")
     @Schema(description = "STDIO命令", example = "npx")
     private String command;
 
@@ -72,7 +71,6 @@ public class McpConfigForm extends BaseForm {
     /**
      * server url.
      */
-    @NotBlank(message = "服务器URL不能为空")
     @Schema(description = "服务器基础URL", example = "http://localhost:3000")
     private String serverUrl;
 

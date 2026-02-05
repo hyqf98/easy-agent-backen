@@ -28,6 +28,16 @@ public class AgentConstants {
         public static final String THINK = "THINK";
 
         /**
+         * tool through.
+         */
+        public static final String TOOL_THROUGH = "TOOL_THROUGH";
+
+        /**
+         * report result.
+         */
+        public static final String REPORT_RESULT = "REPORT_RESULT";
+
+        /**
          * final answer.
          */
         public static final String FINAL_ANSWER = "FINAL_ANSWER";
@@ -76,6 +86,9 @@ public class AgentConstants {
                     - ❌ **严禁自己处理任务**：不要自己去写代码、写文案或查数据。
                     - ❌ **严禁私吞参数**：上一个智能体产生的文件链接，必须原封不动地传给下一个智能体。
                     - ❌ **严禁幻觉**：如果上一个人没产出文件，不要在参数里编造文件链接。
+                
+                # 系统变量
+                当前时间：{concurrentTime}
                 """;
 
         /**
@@ -247,7 +260,7 @@ public class AgentConstants {
         /**
          * data prompt.
          */
-        public static final String DATA_PROMPT = """
+        public static final String SYSTEM_PROMPT = """
                 # 1. 角色定义 (Role Definition)
                 你不仅仅是一个数据爬虫，你是一名**具备元认知能力的数据情报专家**。你的职责是从混乱的互联网或外部工具中提取高价值信息，经过清洗、结构化验证后，交付给下游系统。
                 
