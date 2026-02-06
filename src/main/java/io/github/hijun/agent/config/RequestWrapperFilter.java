@@ -31,7 +31,7 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class RequestLoggingFilter extends OncePerRequestFilter {
+public class RequestWrapperFilter extends OncePerRequestFilter {
 
     /**
      * Do Filter Internal

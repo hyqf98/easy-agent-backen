@@ -5,10 +5,12 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import io.github.hijun.agent.entity.dto.McpConfigDTO;
 import io.github.hijun.agent.entity.dto.McpPromptDTO;
 import io.github.hijun.agent.entity.dto.McpResourceDTO;
+import io.github.hijun.agent.entity.dto.McpTestToolResponse;
 import io.github.hijun.agent.entity.dto.McpToolDTO;
 import io.github.hijun.agent.entity.po.McpConfig;
 import io.github.hijun.agent.entity.req.McpConfigForm;
 import io.github.hijun.agent.entity.req.McpConfigQuery;
+import io.github.hijun.agent.entity.req.McpToolTestRequest;
 import org.springframework.ai.tool.ToolCallback;
 
 import java.util.List;
@@ -112,4 +114,13 @@ public interface McpConfigService extends IService<McpConfig> {
      * @since 1.0.0-SNAPSHOT
      */
     List<McpPromptDTO> listPrompts(Long id);
+
+    /**
+     * 测试MCP工具
+     *
+     * @param request 测试请求
+     * @return 测试结果
+     * @since 1.0.0-SNAPSHOT
+     */
+    McpTestToolResponse testTool(McpToolTestRequest request);
 }

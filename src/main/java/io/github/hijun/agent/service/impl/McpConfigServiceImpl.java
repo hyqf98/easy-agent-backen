@@ -14,10 +14,12 @@ import io.github.hijun.agent.entity.dto.McpConfigDTO;
 import io.github.hijun.agent.entity.dto.McpPromptArgumentDTO;
 import io.github.hijun.agent.entity.dto.McpPromptDTO;
 import io.github.hijun.agent.entity.dto.McpResourceDTO;
+import io.github.hijun.agent.entity.dto.McpTestToolResponse;
 import io.github.hijun.agent.entity.dto.McpToolDTO;
 import io.github.hijun.agent.entity.po.McpConfig;
 import io.github.hijun.agent.entity.req.McpConfigForm;
 import io.github.hijun.agent.entity.req.McpConfigQuery;
+import io.github.hijun.agent.entity.req.McpToolTestRequest;
 import io.github.hijun.agent.mapper.McpConfigMapper;
 import io.github.hijun.agent.service.McpConfigService;
 import io.github.hijun.agent.utils.Jsons;
@@ -577,5 +579,48 @@ public class McpConfigServiceImpl extends ServiceImpl<McpConfigMapper, McpConfig
             cause = cause.getCause();
         }
         return cause;
+    }
+
+    /**
+     * Test Tool
+     *
+     * @param request request
+     * @return mcp test tool response
+     * @since 1.0.0-SNAPSHOT
+     */
+    @Override
+    public McpTestToolResponse testTool(McpToolTestRequest request) {
+        Assert.notNull(request, "测试请求不能为空");
+        Assert.notNull(request.getMcpId(), "MCP配置ID不能为空");
+        Assert.hasText(request.getToolName(), "工具名称不能为空");
+
+        // 查询MCP配置
+        McpConfig config = super.getById(request.getMcpId());
+        if (config == null) {
+            return McpTestToolResponse.failure(request.getToolName(), "MCP配置不存在");
+        }
+
+        try (McpSyncClient client = this.createMcpClient(config)) {
+            if (client != null) {
+                client.initialize();
+
+                // 构建调用参数
+                McpSchema.CallToolRequest callToolRequest = new McpSchema.CallToolRequest(
+                        request.getToolName(),
+                        request.getArguments() != null ? request.getArguments() : Map.of()
+                );
+
+                // 调用工具
+                McpSchema.CallToolResult result = client.callTool(callToolRequest);
+
+                // 返回结果
+                return McpTestToolResponse.success(request.getToolName(), result.content());
+            }
+        } catch (Exception e) {
+            log.error("测试MCP工具失败: {}", request.getToolName(), e);
+            return McpTestToolResponse.failure(request.getToolName(), e.getMessage());
+        }
+
+        return McpTestToolResponse.failure(request.getToolName(), "创建MCP客户端失败");
     }
 }

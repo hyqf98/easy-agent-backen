@@ -5,9 +5,11 @@ import io.github.hijun.agent.common.validation.UpdateGroup;
 import io.github.hijun.agent.entity.dto.McpConfigDTO;
 import io.github.hijun.agent.entity.dto.McpPromptDTO;
 import io.github.hijun.agent.entity.dto.McpResourceDTO;
+import io.github.hijun.agent.entity.dto.McpTestToolResponse;
 import io.github.hijun.agent.entity.dto.McpToolDTO;
 import io.github.hijun.agent.entity.req.McpConfigForm;
 import io.github.hijun.agent.entity.req.McpConfigQuery;
+import io.github.hijun.agent.entity.req.McpToolTestRequest;
 import io.github.hijun.agent.service.McpConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -161,5 +163,18 @@ public class McpConfigController {
     @Operation(summary = "查询MCP服务器的提示词列表", description = "查询指定MCP服务器提供的所有提示词")
     public List<McpPromptDTO> listPrompts(@PathVariable Long id) {
         return this.mcpConfigService.listPrompts(id);
+    }
+
+    /**
+     * 测试MCP工具
+     *
+     * @param request 测试请求
+     * @return 测试结果
+     * @since 1.0.0-SNAPSHOT
+     */
+    @PostMapping("/tool/test")
+    @Operation(summary = "测试MCP工具", description = "调用指定的MCP工具并返回执行结果")
+    public McpTestToolResponse testTool(@Validated @RequestBody McpToolTestRequest request) {
+        return this.mcpConfigService.testTool(request);
     }
 }

@@ -1,6 +1,7 @@
 package io.github.hijun.agent.entity.req;
 
 import io.github.hijun.agent.common.enums.AdditionalFeatures;
+import io.github.hijun.agent.common.enums.ChatMode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,9 +18,9 @@ import java.util.List;
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT
- * @since 1.0.0-SNAPSHOT
  * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/2/3 13:35
+ * @since 1.0.0-SNAPSHOT
  */
 @Data
 @NoArgsConstructor
@@ -33,6 +34,13 @@ public class UserChatRequest {
     @Schema(description = "模型ID", example = "1")
     @NotNull(message = "模型ID不能为空")
     private Long modelId;
+
+    /**
+     * mode.
+     */
+    @NotNull(message = "mode不能为空")
+    @Schema(description = "mode")
+    private ChatMode mode;
 
     /**
      * 用户消息内容

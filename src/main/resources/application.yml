@@ -10,6 +10,16 @@ spring:
     password: zhxx@123456
   prompt:
     max-step: 30
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+# Agent 配置
+agent:
+  # 文件存储根路径
+  storage-path: /Users/haijun/Downloads/agent_files
 
 mybatis-plus:
   global-config:

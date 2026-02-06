@@ -30,7 +30,7 @@ import java.util.StringJoiner;
  * @since 1.0.0-SNAPSHOT
  */
 @Slf4j
-public class MultiCollaborationAgent extends ReActLLM {
+public class MultiCollaborationAgent extends ReActLLM<Object> {
 
 
     /**

@@ -19,6 +19,11 @@ import org.springframework.context.annotation.Configuration;
 public class ApplicationProperties {
 
     /**
+     * 默认存储路径。
+     */
+    public static final String DEFAULT_STORAGE_PATH = "/tmp/agent-files/";
+
+    /**
      * prefix.
      */
     public static final String PREFIX = "agent";

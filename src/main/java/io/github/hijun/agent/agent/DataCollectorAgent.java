@@ -1,5 +1,7 @@
 package io.github.hijun.agent.agent;
 
+import com.fasterxml.jackson.annotation.JsonClassDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.github.hijun.agent.common.constant.AgentConstants;
 import io.github.hijun.agent.common.enums.SseMessageType;
 import io.github.hijun.agent.common.enums.ToolStatus;
@@ -7,6 +9,9 @@ import io.github.hijun.agent.entity.AgentContext;
 import io.github.hijun.agent.entity.sse.TextMessage;
 import io.github.hijun.agent.entity.sse.ToolCallMessage;
 import io.github.hijun.agent.utils.StreamTagParser;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -22,6 +27,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.github.hijun.agent.agent.DataCollectorAgent.DataCollectorAgentResponse;
+
 /**
  * Data Collector Agent
  *
@@ -32,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 1.0.0-SNAPSHOT
  */
 @Slf4j
-public class DataCollectorAgent extends ReActLLM {
+public class DataCollectorAgent extends ReActLLM<DataCollectorAgentResponse> {
 
     /**
      * stream tag parser.
@@ -179,5 +186,46 @@ public class DataCollectorAgent extends ReActLLM {
                 return new ToolResponseMessage.ToolResponse(id, name, e.getMessage());
             }
         }).toList();
+    }
+
+    /**
+     * Agent Callback Context
+     *
+     * @author haijun
+     * @version 1.0.0-SNAPSHOT
+     * @email "mailto:iamxiaohaijun@gmail.com"
+     * @date 2026/2/5 18:23
+     * @since 1.0.0-SNAPSHOT
+     */
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @JsonClassDescription("智能体统一响应")
+    public static class DataCollectorAgentResponse {
+        /**
+         * content.
+         */
+        @JsonPropertyDescription("响应内容")
+        private String content;
+        /**
+         * files.
+         */
+        @JsonPropertyDescription("文件列表")
+        private List<FileInfo> files;
+    }
+
+
+    /**
+     * File Info
+     *
+     * @author haijun
+     * @version 1.0.0-SNAPSHOT
+     * @email "mailto:iamxiaohaijun@gmail.com"
+     * @date 2026/2/5 18:25
+     * @since 1.0.0-SNAPSHOT
+     */
+    public record FileInfo(@JsonPropertyDescription("文件名称") String name,
+                           @JsonPropertyDescription("文件URL") String url,
+                           String description) {
     }
 }

@@ -36,6 +36,7 @@ import java.util.concurrent.CompletableFuture;
  * 实现 ReAct (Reasoning + Acting) 模式的 LLM Agent
  * 支持循环调度，最多执行 30 步
  *
+ * @param <T> t
  * @author haijun
  * @version 1.0.0-SNAPSHOT
  * @email "mailto:iamxiaohaijun@gmail.com"
@@ -45,7 +46,7 @@ import java.util.concurrent.CompletableFuture;
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
 @Data
-public abstract class ReActLLM extends BaseLLM {
+public abstract class ReActLLM<T> extends BaseLLM {
 
     /**
      * max retry times.
@@ -115,9 +116,10 @@ public abstract class ReActLLM extends BaseLLM {
      * 最多执行 30 步，直到达到停止条件
      *
      * @param userQuestion user question
+     * @return t
      * @since 1.0.0-SNAPSHOT
      */
-    public void run(String userQuestion) {
+    public T run(String userQuestion) {
         SystemMessage systemMessage = new SystemMessage(this.systemPrompt);
 
         UserMessage userMessage = new UserMessage(userQuestion);
@@ -140,9 +142,8 @@ public abstract class ReActLLM extends BaseLLM {
                     List<ToolCall> toolThought = this.think(messages);
                     if (CollectionUtil.isEmpty(toolThought)) {
                         // 内容进行总结响应
-                        this.summary(messages);
                         this.agentStatus = AgentStatus.FINISHED;
-                        break;
+                        return this.summary(messages);
                     }
                     List<ToolResponse> toolResponses = this.action(toolThought);
                     if (CollectionUtil.isNotEmpty(toolResponses)) {
@@ -162,16 +163,18 @@ public abstract class ReActLLM extends BaseLLM {
             log.error("ReAct 循环发生错误: {}", e.getMessage(), e);
             this.agentContext.error(e);
         }
+        return null;
     }
 
     /**
      * 对结果进行总结
      *
      * @param messages messages
+     * @return t
      * @since 1.0.0-SNAPSHOT
      */
-    protected void summary(List<Message> messages) {
-
+    protected T summary(List<Message> messages) {
+        return null;
     }
 
     /**
@@ -194,7 +197,7 @@ public abstract class ReActLLM extends BaseLLM {
      * 子类需要实现具体的思考逻辑
      * 返回 false 表示应该停止循环
      *
-     * @param messages  messages
+     * @param messages messages
      * @return true 继续执行，false 停止执行
      * @since 1.0.0-SNAPSHOT
      */
@@ -248,7 +251,6 @@ public abstract class ReActLLM extends BaseLLM {
         return toolCallTasks.stream().map(task -> {
             String id = task.getId();
             String name = task.getName();
-            String inputParams = task.getInputParams();
             try {
                 return task.getResultFuture().get();
             } catch (Exception e) {
