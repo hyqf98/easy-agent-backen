@@ -1,6 +1,8 @@
 package io.github.hijun.agent.agent;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ClassUtil;
+import cn.hutool.core.util.StrUtil;
 import io.github.hijun.agent.common.enums.AgentStatus;
 import io.github.hijun.agent.common.enums.SseMessageType;
 import io.github.hijun.agent.entity.AgentContext;
@@ -27,6 +29,7 @@ import reactor.core.publisher.Flux;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -52,6 +55,11 @@ public abstract class ReActLLM<T> extends BaseLLM {
      * max retry times.
      */
     private static final Integer MAX_RETRY_TIMES = 30;
+
+    /**
+     * argument.
+     */
+    private final Class<T> argument;
 
     /**
      * agent context.
@@ -107,43 +115,38 @@ public abstract class ReActLLM<T> extends BaseLLM {
         this.systemPrompt = systemPrompt;
         this.nextStepPrompt = nextStepPrompt;
         this.toolCallbackResolver = new StaticToolCallbackResolver(agentContext.getToolCallbacks());
+        // noinspection unchecked
+        this.argument = (Class<T>) ClassUtil.getTypeArgument(this.getClass());
     }
 
     /**
      * 循环执行 ReAct 流程
      * <p>
-     * ReAct 循环: Think -> Act -> Observe -> Think ...
-     * 最多执行 30 步，直到达到停止条件
+     * ReAct 循环: Think -> Act -> Next Message -> Think ...
      *
-     * @param userQuestion user question
+     * @param task user question
      * @return t
      * @since 1.0.0-SNAPSHOT
      */
-    public T run(String userQuestion) {
+    public T run(String task) {
         SystemMessage systemMessage = new SystemMessage(this.systemPrompt);
-
-        UserMessage userMessage = new UserMessage(userQuestion);
+        UserMessage userMessage = new UserMessage(task);
         this.agentContext.addMessage(userMessage);
         this.agentStatus = AgentStatus.RUNNING;
+        List<Message> messages = new LinkedList<>();
+        messages.add(systemMessage);
+        messages.add(userMessage);
         try {
-            List<Message> messages = new LinkedList<>();
-            messages.add(systemMessage);
-            messages.add(userMessage);
             // 循环执行直到达到停止条件
             while (this.concurrentStep < this.maxStep && this.agentStatus == AgentStatus.RUNNING) {
                 try {
                     this.concurrentStep++;
                     log.debug("ReAct 步骤: {}/{}", this.concurrentStep, this.maxStep);
-                    if (!this.lastMessageIsUser(messages)) {
-                        UserMessage nextMessage = new UserMessage(this.nextStepPrompt);
-                        messages.add(nextMessage);
-                    }
-
                     List<ToolCall> toolThought = this.think(messages);
                     if (CollectionUtil.isEmpty(toolThought)) {
                         // 内容进行总结响应
                         this.agentStatus = AgentStatus.FINISHED;
-                        return this.summary(messages);
+                        break;
                     }
                     List<ToolResponse> toolResponses = this.action(toolThought);
                     if (CollectionUtil.isNotEmpty(toolResponses)) {
@@ -153,42 +156,18 @@ public abstract class ReActLLM<T> extends BaseLLM {
                         messages.add(responseMessage);
                         this.agentContext.addMessage(responseMessage);
                     }
+                    messages = this.nextStepMessages(task, toolResponses, messages);
                 } catch (Exception e) {
                     this.agentStatus = AgentStatus.ERROR;
                     // 发送异常
+                    this.agentContext.error(e);
                 }
             }
-            this.agentContext.complete();
         } catch (Exception e) {
             log.error("ReAct 循环发生错误: {}", e.getMessage(), e);
             this.agentContext.error(e);
         }
-        return null;
-    }
-
-    /**
-     * 对结果进行总结
-     *
-     * @param messages messages
-     * @return t
-     * @since 1.0.0-SNAPSHOT
-     */
-    protected T summary(List<Message> messages) {
-        return null;
-    }
-
-    /**
-     * Last Message Is User
-     *
-     * @param messages messages
-     * @return boolean
-     * @since 1.0.0-SNAPSHOT
-     */
-    private boolean lastMessageIsUser(List<Message> messages) {
-        if (CollectionUtil.isEmpty(messages)) {
-            return false;
-        }
-        return messages.get(messages.size() - 1).getMessageType() == MessageType.USER;
+        return this.summary(messages);
     }
 
     /**
@@ -258,6 +237,51 @@ public abstract class ReActLLM<T> extends BaseLLM {
                 return new ToolResponse(id, name, e.getMessage());
             }
         }).toList();
+    }
+
+    /**
+     * 下一步执行消息构建
+     *
+     * @param toolResponses tool responses
+     * @param messages      messages
+     * @param task task
+     * @return list
+     * @since 1.0.0-SNAPSHOT
+     */
+    protected List<Message> nextStepMessages(String task, List<ToolResponse> toolResponses, List<Message> messages) {
+        if (!this.lastMessageIsUser(messages) && StrUtil.isNotEmpty(this.nextStepPrompt)) {
+            Map<String, Object> params = Map.of("task", task);
+            this.templateRenderer.apply(this.nextStepPrompt, params);
+            UserMessage nextMessage = new UserMessage(this.nextStepPrompt);
+            messages.add(nextMessage);
+        }
+        return messages;
+    }
+
+    /**
+     * 对结果进行总结
+     *
+     * @param messages messages
+     * @return t
+     * @since 1.0.0-SNAPSHOT
+     */
+    protected T summary(List<Message> messages) {
+        return this.callLLM(messages, this.agentContext.getToolCallbacks(), false, this.argument);
+    }
+
+
+    /**
+     * Last Message Is User
+     *
+     * @param messages messages
+     * @return boolean
+     * @since 1.0.0-SNAPSHOT
+     */
+    protected boolean lastMessageIsUser(List<Message> messages) {
+        if (CollectionUtil.isEmpty(messages)) {
+            return false;
+        }
+        return messages.get(messages.size() - 1).getMessageType() == MessageType.USER;
     }
 
 

@@ -1,6 +1,6 @@
 package io.github.hijun.agent.utils;
 
-import io.github.hijun.agent.common.constant.AgentConstants;
+import io.github.hijun.agent.common.enums.StreamTagType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 简易流式标签解析器 (支持单例复用版)
  * <p>
- * 原理：将“解析规则配置”与“解析运行时状态”分离。
+ * 原理：将"解析规则配置"与"解析运行时状态"分离。
  * Parser 本身是单例的，每次解析流时创建一个轻量级的 Session。
  * </p>
  *
@@ -19,11 +19,6 @@ import java.util.List;
  * @since 1.0.0-SNAPSHOT
  */
 public class StreamTagParser {
-
-    /**
-     * 默认的普通文本类型名称
-     */
-    public static final String TYPE_CONTENT = "CONTENT";
 
     /**
      * 策略列表 (只读配置，线程安全)
@@ -37,21 +32,20 @@ public class StreamTagParser {
      * @since 1.0.0-SNAPSHOT
      */
     public StreamTagParser() {
-        this.register("<Final Answer>", "</Final Answer>", AgentConstants.AgentContentType.FINAL_ANSWER)
-                .register("<think>", "</think>", "THINK");
+        this.register(StreamTagType.FINAL_ANSWER)
+                .register(StreamTagType.THINK);
     }
 
     /**
-     * 注册一种新的标签解析策略 (通常在系统启动时配置)
+     * 注册一种新的标签解析策略 (使用枚举类型)
+     * <p>支持多智能体复用相同的标签定义</p>
      *
-     * @param startTag 开始标签，如 "<Final Answer>"
-     * @param endTag   结束标签，如 "</Final Answer>"
-     * @param typeName 对应的类型名称，如 "FINAL_ANSWER"
+     * @param tagType 标签类型枚举
      * @return stream tag parser
      * @since 1.0.0-SNAPSHOT
      */
-    public StreamTagParser register(String startTag, String endTag, String typeName) {
-        this.strategies.add(new TagStrategy(startTag, endTag, typeName));
+    public StreamTagParser register(StreamTagType tagType) {
+        this.strategies.add(new TagStrategy(tagType.getStartTag(), tagType.getEndTag(), tagType));
         return this;
     }
 
@@ -65,10 +59,6 @@ public class StreamTagParser {
     public Session createSession() {
         return new Session(this.strategies);
     }
-
-    // =========================================================================
-    // Inner Classes (Session & Models)
-    // =========================================================================
 
     /**
      * 解析会话 (Stateful)
@@ -108,7 +98,6 @@ public class StreamTagParser {
          * @since 1.0.0-SNAPSHOT
          */
         private Session(List<TagStrategy> strategies) {
-            // 这里使用不可变视图或者直接引用均可，因为 strategies 在 parser 初始化后通常不再变动
             this.strategies = strategies;
         }
 
@@ -203,12 +192,12 @@ public class StreamTagParser {
          */
         private void flushTextBuffer(List<ParseResult> results) {
             if (!this.textBuffer.isEmpty()) {
-                // 如果在策略里，返回策略定义的类型；否则返回默认 CONTENT
-                String type = (this.currentStrategy != null)
-                        ? this.currentStrategy.type()
-                        : TYPE_CONTENT;
+                // 如果在策略里，返回策略定义的枚举类型；否则返回 null (表示普通文本)
+                StreamTagType tagType = (this.currentStrategy != null)
+                        ? this.currentStrategy.tagType()
+                        : null;
 
-                results.add(new ParseResult(this.textBuffer.toString(), type));
+                results.add(new ParseResult(this.textBuffer.toString(), tagType));
                 this.textBuffer.setLength(0);
             }
         }
@@ -223,11 +212,12 @@ public class StreamTagParser {
      * @date 2026/2/3 18:03
      * @since 1.0.0-SNAPSHOT
      */
-    private record TagStrategy(String startTag, String endTag, String type) {
+    private record TagStrategy(String startTag, String endTag, StreamTagType tagType) {
     }
 
     /**
      * Parse Result
+     * <p>直接返回标签类型枚举，无需字符串判断</p>
      *
      * @author haijun
      * @version 1.0.0-SNAPSHOT
@@ -235,6 +225,6 @@ public class StreamTagParser {
      * @date 2026/2/3 18:03
      * @since 1.0.0-SNAPSHOT
      */
-    public record ParseResult(String content, String type) {
+    public record ParseResult(String content, StreamTagType tagType) {
     }
 }

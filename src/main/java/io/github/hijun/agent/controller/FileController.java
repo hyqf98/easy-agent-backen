@@ -83,8 +83,9 @@ public class FileController {
         if (StrUtil.isBlank(path)) {
             path = ApplicationProperties.DEFAULT_STORAGE_PATH;
         }
-        if (!path.endsWith("/") && !path.endsWith("\\")) {
-            path += "/";
+        String separator = File.separator;
+        if (!path.endsWith(separator) && !path.endsWith("/") && !path.endsWith("\\")) {
+            path += separator;
         }
         return path;
     }
@@ -100,9 +101,11 @@ public class FileController {
         Assert.hasText(relativePath, "文件路径不能为空");
         this.validatePathSecurity(relativePath);
 
-        String normalizedPath = relativePath.startsWith("/") || relativePath.startsWith("\\")
-                ? relativePath.substring(1)
-                : relativePath;
+        String separator = File.separator;
+        boolean hasLeadingSeparator = relativePath.startsWith("/") ||
+                relativePath.startsWith("\\") ||
+                relativePath.startsWith(separator);
+        String normalizedPath = hasLeadingSeparator ? relativePath.substring(1) : relativePath;
 
         return this.getStoragePath() + normalizedPath;
     }
@@ -163,6 +166,30 @@ public class FileController {
             Files.copy(path, os);
             os.flush();
         }
+    }
+
+    /**
+     * 设置文件响应并发送（预览或下载）。
+     *
+     * @param file         文件对象
+     * @param relativePath 相对路径（用于日志）
+     * @param response     HTTP 响应
+     * @param isAttachment 是否为附件下载（true=下载，false=预览）
+     * @param actionDesc   操作描述（用于日志）
+     * @throws IOException 当写入失败时
+     * @since 1.0.0-SNAPSHOT
+     */
+    private void sendFileResponse(File file, String relativePath, HttpServletResponse response,
+                                  boolean isAttachment, String actionDesc) throws IOException {
+        String mimeType = this.getMimeType(file.getAbsolutePath());
+        String disposition = isAttachment ? "attachment" : "inline";
+
+        log.info("{}: {}", actionDesc, relativePath);
+
+        response.setContentType(mimeType);
+        response.setHeader(HttpHeaders.CONTENT_DISPOSITION,
+                disposition + "; filename*=UTF-8''" + URLEncoder.encode(file.getName(), StandardCharsets.UTF_8));
+        this.writeFileToResponse(file, response);
     }
 
     /**
@@ -244,13 +271,7 @@ public class FileController {
             HttpServletResponse response) throws IOException {
 
         File file = this.getAndValidateFile(path, true);
-        String mimeType = this.getMimeType(file.getAbsolutePath());
-
-        log.info("预览文件: {}", path);
-
-        response.setContentType(mimeType);
-        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "inline; filename*=UTF-8''" + URLEncoder.encode(file.getName(), StandardCharsets.UTF_8));
-        this.writeFileToResponse(file, response);
+        this.sendFileResponse(file, path, response, false, "预览文件");
     }
 
     /**
@@ -269,13 +290,7 @@ public class FileController {
             HttpServletResponse response) throws IOException {
 
         File file = this.getAndValidateFile(path, true);
-        String mimeType = this.getMimeType(file.getAbsolutePath());
-
-        log.info("下载文件: {}", path);
-
-        response.setContentType(mimeType);
-        response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename*=UTF-8''" + URLEncoder.encode(file.getName(), StandardCharsets.UTF_8));
-        this.writeFileToResponse(file, response);
+        this.sendFileResponse(file, path, response, true, "下载文件");
     }
 
     /**
@@ -357,15 +372,14 @@ public class FileController {
                 .build();
     }
 
-    // ==================== 内部类 ====================
 
     /**
      * 文件信息。
      *
      * @author haijun
+     * @version 1.0.0-SNAPSHOT
      * @email "mailto:iamxiaohaijun@gmail.com"
      * @date 2026/2/6 11:36
-     * @version 1.0.0-SNAPSHOT
      * @since 1.0.0-SNAPSHOT
      */
     @Builder
@@ -401,9 +415,9 @@ public class FileController {
      * 文件存在信息。
      *
      * @author haijun
+     * @version 1.0.0-SNAPSHOT
      * @email "mailto:iamxiaohaijun@gmail.com"
      * @date 2026/2/6 11:36
-     * @version 1.0.0-SNAPSHOT
      * @since 1.0.0-SNAPSHOT
      */
     @Builder

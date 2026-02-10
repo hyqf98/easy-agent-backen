@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * File Info Message
  *
@@ -17,23 +19,49 @@ import lombok.Data;
 @Data
 @Builder
 @JsonClassDescription("文件消息实体")
-public class FileInfoMessage {
+public class FileContentMessage {
 
     /**
-     * name.
+     * content.
      */
-    @JsonPropertyDescription("File name")
-    private String name;
+    @JsonPropertyDescription("消息内容")
+    private String content;
 
     /**
-     * url.
+     * files.
      */
-    @JsonPropertyDescription("File path")
-    private String path;
+    @JsonPropertyDescription("文件列表")
+    private List<FileInfo> files;
 
     /**
-     * description.
+     * File Info
+     *
+     * @author haijun
+     * @email "mailto:iamxiaohaijun@gmail.com"
+     * @date 2026/2/10 14:08
+     * @version 1.0.0-SNAPSHOT
+     * @since 1.0.0-SNAPSHOT
      */
-    @JsonPropertyDescription("File description")
-    private String description;
+    @Data
+    @Builder
+    public static class FileInfo {
+
+        /**
+         * name.
+         */
+        @JsonPropertyDescription("File name")
+        private String name;
+
+        /**
+         * url.
+         */
+        @JsonPropertyDescription("File path")
+        private String path;
+
+        /**
+         * description.
+         */
+        @JsonPropertyDescription("File description")
+        private String description;
+    }
 }

@@ -28,7 +28,12 @@ public enum ChatMode implements BaseEnum<String> {
     /**
      * p p t.
      */
-    PPT("ppt", "PPT模式");
+    PPT("ppt", "PPT模式"),
+
+    /**
+     * b r a i n s t o r m i n g.
+     */
+    BRAINSTORMING("brainstorming", "头脑风暴");
 
     /**
      * value.

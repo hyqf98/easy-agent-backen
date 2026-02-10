@@ -4,6 +4,9 @@ import io.github.hijun.agent.common.enums.SseMessageType;
 import io.github.hijun.agent.entity.dto.LlmModelDTO;
 import io.github.hijun.agent.entity.sse.SseMessage;
 import io.github.hijun.agent.entity.sse.TextMessage;
+import io.github.hijun.agent.utils.Jsons;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -28,6 +31,8 @@ import java.util.List;
  */
 @Slf4j
 @Data
+@Builder
+@AllArgsConstructor
 public class AgentContext {
 
     /**
@@ -143,10 +148,11 @@ public class AgentContext {
     /**
      * 完成 Agent 执行
      *
+     * @param finalContent final content
      * @since 1.0.0-SNAPSHOT
      */
-    public void complete() {
-        TextMessage done = TextMessage.builder().text("DONE").build();
+    public void complete(Object finalContent) {
+        TextMessage done = TextMessage.builder().text(Jsons.toJson(finalContent)).build();
         this.sendMessage("", SseMessageType.COMPLETED, done);
         this.sink.tryEmitComplete();
     }
@@ -161,5 +167,15 @@ public class AgentContext {
         TextMessage done = TextMessage.builder().text(error.getMessage()).build();
         this.sendMessage("", SseMessageType.ERROR, done);
         this.sink.tryEmitError(error);
+    }
+
+    /**
+     * Copy
+     *
+     * @return agent context
+     * @since 1.0.0-SNAPSHOT
+     */
+    public AgentContext copy() {
+        return new AgentContext(this.sink, this.llmModel, this.sessionId, this.requestId);
     }
 }

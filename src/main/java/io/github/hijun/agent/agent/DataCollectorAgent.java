@@ -1,17 +1,15 @@
 package io.github.hijun.agent.agent;
 
-import com.fasterxml.jackson.annotation.JsonClassDescription;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.github.hijun.agent.common.constant.AgentConstants;
 import io.github.hijun.agent.common.enums.SseMessageType;
+import io.github.hijun.agent.common.enums.StreamTagType;
 import io.github.hijun.agent.common.enums.ToolStatus;
 import io.github.hijun.agent.entity.AgentContext;
+import io.github.hijun.agent.entity.sse.FileContentMessage;
 import io.github.hijun.agent.entity.sse.TextMessage;
 import io.github.hijun.agent.entity.sse.ToolCallMessage;
 import io.github.hijun.agent.utils.StreamTagParser;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -22,12 +20,11 @@ import org.springframework.ai.tool.ToolCallback;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static io.github.hijun.agent.agent.DataCollectorAgent.DataCollectorAgentResponse;
 
 /**
  * Data Collector Agent
@@ -39,7 +36,7 @@ import static io.github.hijun.agent.agent.DataCollectorAgent.DataCollectorAgentR
  * @since 1.0.0-SNAPSHOT
  */
 @Slf4j
-public class DataCollectorAgent extends ReActLLM<DataCollectorAgentResponse> {
+public class DataCollectorAgent extends ReActLLM<List<FileContentMessage>> {
 
     /**
      * stream tag parser.
@@ -60,8 +57,7 @@ public class DataCollectorAgent extends ReActLLM<DataCollectorAgentResponse> {
                 AgentConstants.ReAct.NEXT_STEP_PROMPT,
                 agentContext);
         this.streamTagParser = new StreamTagParser();
-        this.streamTagParser.register("<think>", "</think>", AgentConstants.AgentContentType.THINK);
-        this.streamTagParser.register("<ToolThrough>", "</ToolThrough>", AgentConstants.AgentContentType.TOOL_THROUGH);
+        this.streamTagParser.register(StreamTagType.TOOL_THROUGH);
     }
 
     /**
@@ -92,13 +88,10 @@ public class DataCollectorAgent extends ReActLLM<DataCollectorAgentResponse> {
                     if (contentToSend == null || contentToSend.isEmpty()) {
                         continue;
                     }
-                    switch (result.type()) {
-                        case AgentConstants.AgentContentType.TOOL_THROUGH:
-                            sseMessageType.set(SseMessageType.TOOL_THROUGH);
-                            break;
-                        case AgentConstants.AgentContentType.THINK:
-                            sseMessageType.set(SseMessageType.THINKING);
-                            break;
+                    // 直接使用枚举类型，无需字符串判断
+                    StreamTagType tagType = result.tagType();
+                    if (tagType != null) {
+                        sseMessageType.set(tagType.getSseMessageType());
                     }
                     // 发送消息
                     TextMessage textMessage = TextMessage.builder()
@@ -116,6 +109,19 @@ public class DataCollectorAgent extends ReActLLM<DataCollectorAgentResponse> {
                 .build();
         this.agentContext.sendMessage(messageId, sseMessageType.get(), textMessage);
         return list;
+    }
+
+    /**
+     * 对查询结果进行总结
+     *
+     * @param messages messages
+     * @return data collector agent response
+     * @since 1.0.0-SNAPSHOT
+     */
+    @Override
+    protected List<FileContentMessage> summary(List<Message> messages) {
+        return this.callLLM(messages, Collections.emptyList(), false, new TypeReference<>() {
+        });
     }
 
     /**
@@ -186,46 +192,5 @@ public class DataCollectorAgent extends ReActLLM<DataCollectorAgentResponse> {
                 return new ToolResponseMessage.ToolResponse(id, name, e.getMessage());
             }
         }).toList();
-    }
-
-    /**
-     * Agent Callback Context
-     *
-     * @author haijun
-     * @version 1.0.0-SNAPSHOT
-     * @email "mailto:iamxiaohaijun@gmail.com"
-     * @date 2026/2/5 18:23
-     * @since 1.0.0-SNAPSHOT
-     */
-    @Data
-    @Builder
-    @AllArgsConstructor
-    @JsonClassDescription("智能体统一响应")
-    public static class DataCollectorAgentResponse {
-        /**
-         * content.
-         */
-        @JsonPropertyDescription("响应内容")
-        private String content;
-        /**
-         * files.
-         */
-        @JsonPropertyDescription("文件列表")
-        private List<FileInfo> files;
-    }
-
-
-    /**
-     * File Info
-     *
-     * @author haijun
-     * @version 1.0.0-SNAPSHOT
-     * @email "mailto:iamxiaohaijun@gmail.com"
-     * @date 2026/2/5 18:25
-     * @since 1.0.0-SNAPSHOT
-     */
-    public record FileInfo(@JsonPropertyDescription("文件名称") String name,
-                           @JsonPropertyDescription("文件URL") String url,
-                           String description) {
     }
 }

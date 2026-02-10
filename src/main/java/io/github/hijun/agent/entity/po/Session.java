@@ -2,6 +2,7 @@ package io.github.hijun.agent.entity.po;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import io.github.hijun.agent.common.enums.ChatMode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -40,4 +41,10 @@ public class Session extends BasePo implements Serializable {
      */
     @TableField("model_id")
     private Long modelId;
+
+    /**
+     * 聊天模式
+     */
+    @TableField("chat_mode")
+    private ChatMode chatMode;
 }

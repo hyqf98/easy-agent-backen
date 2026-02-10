@@ -1,20 +1,24 @@
 package io.github.hijun.agent.agent;
 
 import cn.hutool.core.annotation.AnnotationUtil;
-import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
 import com.fasterxml.jackson.annotation.JsonClassDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import io.github.hijun.agent.annotations.Agent;
 import io.github.hijun.agent.common.constant.AgentConstants;
 import io.github.hijun.agent.entity.AgentContext;
+import io.github.hijun.agent.entity.sse.FileContentMessage;
+import io.github.hijun.agent.utils.Jsons;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage.ToolCall;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
+import org.springframework.ai.chat.messages.UserMessage;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -30,13 +34,18 @@ import java.util.StringJoiner;
  * @since 1.0.0-SNAPSHOT
  */
 @Slf4j
-public class MultiCollaborationAgent extends ReActLLM<Object> {
+public class MultiCollaborationAgent extends ReActLLM<FileContentMessage> {
 
 
     /**
      * agents.
      */
-    private final List<ReActLLM> agents = new LinkedList<>();
+    private final List<ReActLLM<?>> agents = new LinkedList<>();
+
+    /**
+     * agent map.
+     */
+    private final Map<String, ReActLLM<?>> agentMap = new HashMap<>();
 
     /**
      * ReAct LLM
@@ -52,7 +61,16 @@ public class MultiCollaborationAgent extends ReActLLM<Object> {
                 AgentConstants.MultiCollaboration.NEXTSTEP_PROMPT,
                 agentContext);
 
-        this.agents.add(new DataCollectorAgent(chatClient, agentContext));
+        this.agents.add(new DataCollectorAgent(chatClient, agentContext.copy()));
+        this.agents.add(new ReportAgent(chatClient, agentContext.copy()));
+
+        this.agents.forEach(agent -> {
+            Agent annotation = AnnotationUtil.getAnnotation(agent.getClass(), Agent.class);
+            if (annotation == null) {
+                return;
+            }
+            this.agentMap.put(annotation.value(), agent);
+        });
     }
 
     /**
@@ -80,9 +98,9 @@ public class MultiCollaborationAgent extends ReActLLM<Object> {
      */
     @Override
     protected Map<String, Object> getTemplateContext() {
-        Map<String, Object> context = super.getTemplateContext();
+        Map<String, Object> context = new HashMap<>(2);
         context.put("AgentList", this.getAgentList());
-        context.put("concurrentTime", DateUtil.now());
+        context.put("ConcurrentTime", DateUtil.now());
         return context;
     }
 
@@ -103,6 +121,30 @@ public class MultiCollaborationAgent extends ReActLLM<Object> {
     }
 
     /**
+     * 设置下一步消息
+     *
+     * @param toolResponses tool responses
+     * @param messages      messages
+     * @param task task
+     * @return list
+     * @since 1.0.0-SNAPSHOT
+     */
+    @Override
+    protected List<Message> nextStepMessages(String task, List<ToolResponseMessage.ToolResponse> toolResponses, List<Message> messages) {
+        if (this.lastMessageIsUser(messages) && CollectionUtil.isNotEmpty(toolResponses)) {
+            ToolResponseMessage.ToolResponse toolResponse = toolResponses.get(0);
+            String id = toolResponse.id();
+            Map<String, Object> params = Map.of("AgentId", id,
+                    "AgentName", toolResponse.name(),
+                    "AgentResult", toolResponse.responseData());
+            String nextMessage = this.templateRenderer.apply(AgentConstants.MultiCollaboration.NEXTSTEP_PROMPT, params);
+            UserMessage userMessage = UserMessage.builder().text(nextMessage).build();
+            messages.add(userMessage);
+        }
+        return messages;
+    }
+
+    /**
      * Action
      *
      * @param toolCalls tool calls
@@ -111,14 +153,26 @@ public class MultiCollaborationAgent extends ReActLLM<Object> {
      */
     @Override
     protected List<ToolResponseMessage.ToolResponse> action(List<ToolCall> toolCalls) {
-        if (CollUtil.isEmpty(toolCalls)) {
-            return Collections.emptyList();
-        }
         ToolCall agentCall = toolCalls.get(0);
+        String id = agentCall.id();
+        ReActLLM<?> agent = this.agentMap.get(id);
+        if (agent == null) {
+            return List.of(new ToolResponseMessage.ToolResponse(agentCall.id(), agentCall.name(), "Agent not found"));
+        }
+        Object result = agent.run(agentCall.arguments());
+        return List.of(new ToolResponseMessage.ToolResponse(agentCall.id(), agentCall.name(), Jsons.toJson(result)));
+    }
 
-        // 调用agent
-
-        return List.of(new ToolResponseMessage.ToolResponse(agentCall.id(), agentCall.name(), ""));
+    /**
+     * Summary
+     *
+     * @param messages messages
+     * @return object
+     * @since 1.0.0-SNAPSHOT
+     */
+    @Override
+    protected FileContentMessage summary(List<Message> messages) {
+        return super.summary(messages);
     }
 
     /**

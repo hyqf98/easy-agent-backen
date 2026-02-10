@@ -1,5 +1,6 @@
 package io.github.hijun.agent.entity.dto;
 
+import io.github.hijun.agent.common.enums.ChatMode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,6 +38,12 @@ public class SessionDTO extends BaseDTO {
      */
     @Schema(description = "模型ID")
     private Long modelId;
+
+    /**
+     * 聊天模式
+     */
+    @Schema(description = "聊天模式")
+    private ChatMode chatMode;
 
     /**
      * 消息数量

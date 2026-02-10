@@ -1,5 +1,6 @@
 package io.github.hijun.agent.entity.req;
 
+import io.github.hijun.agent.common.enums.ChatMode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -37,4 +38,10 @@ public class SessionForm extends BaseForm {
     @NotNull(message = "模型ID不能为空")
     @Schema(description = "模型ID")
     private Long modelId;
+
+    /**
+     * 聊天模式（新增时可选，默认为智能问答）
+     */
+    @Schema(description = "聊天模式")
+    private ChatMode chatMode;
 }

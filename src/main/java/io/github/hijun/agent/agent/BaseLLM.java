@@ -1,5 +1,6 @@
 package io.github.hijun.agent.agent;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.Message;
@@ -9,8 +10,10 @@ import org.springframework.ai.template.TemplateRenderer;
 import org.springframework.ai.template.ValidationMode;
 import org.springframework.ai.template.st.StTemplateRenderer;
 import org.springframework.ai.tool.ToolCallback;
+import org.springframework.core.ParameterizedTypeReference;
 import reactor.core.publisher.Flux;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
@@ -53,7 +56,7 @@ public abstract class BaseLLM {
     /**
      * Base L L M
      *
-     * @param chatClient chat client
+     * @param chatClient       chat client
      * @param templateRenderer template renderer
      * @since 1.0.0-SNAPSHOT
      */
@@ -118,6 +121,41 @@ public abstract class BaseLLM {
                 .messages(messages)
                 .call()
                 .entity(clazz);
+    }
+
+    /**
+     * Call L L M
+     *
+     * @param <T>            类型参数 T
+     * @param messages       messages
+     * @param toolCallbacks  tool callbacks
+     * @param enableToolCall enable tool call
+     * @param clazz          clazz
+     * @return t
+     * @since 1.0.0-SNAPSHOT
+     */
+    public <T> T callLLM(List<Message> messages,
+                         List<ToolCallback> toolCallbacks,
+                         boolean enableToolCall,
+                         TypeReference<T> clazz) {
+
+        ToolCallingChatOptions callingChatOptions = ToolCallingChatOptions.builder()
+                .internalToolExecutionEnabled(enableToolCall)
+                .toolCallbacks(toolCallbacks)
+                .build();
+
+        return this.chatClient
+                .prompt()
+                .options(callingChatOptions)
+                .templateRenderer(this.templateRenderer)
+                .messages(messages)
+                .call()
+                .entity(new ParameterizedTypeReference<>() {
+                    @Override
+                    public Type getType() {
+                        return clazz.getType();
+                    }
+                });
     }
 
     /**

@@ -2,11 +2,12 @@ package io.github.hijun.agent.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import io.github.hijun.agent.agent.DataCollectorAgent;
+import io.github.hijun.agent.agent.MultiCollaborationAgent;
 import io.github.hijun.agent.agent.ReActLLM;
 import io.github.hijun.agent.entity.AgentContext;
 import io.github.hijun.agent.entity.dto.LlmModelDTO;
 import io.github.hijun.agent.entity.req.UserChatRequest;
+import io.github.hijun.agent.entity.sse.FileContentMessage;
 import io.github.hijun.agent.entity.sse.SseMessage;
 import io.github.hijun.agent.service.ChatService;
 import io.github.hijun.agent.service.LlmModelService;
@@ -33,9 +34,9 @@ import java.util.concurrent.Executors;
  *
  * @author haijun
  * @version 1.0.0-SNAPSHOT
- * @since 1.0.0-SNAPSHOT
  * @email "mailto:iamxiaohaijun@gmail.com"
  * @date 2026/2/2 17:50
+ * @since 1.0.0-SNAPSHOT
  */
 @Slf4j
 @Service
@@ -82,13 +83,6 @@ public class ChatServiceImpl implements ChatService {
 
         // 创建 Sinks.Many 用于主动发送数据
         Sinks.Many<SseMessage<?>> sink = Sinks.many().multicast().onBackpressureBuffer();
-
-        // 生成会话 ID 和请求 ID
-        String sessionId = this.generateSessionId(userChatRequest);
-        String requestId = this.generateRequestId(userChatRequest);
-
-        log.info("生成会话ID: {}, 请求ID: {}", sessionId, requestId);
-
         Long modelId = userChatRequest.getModelId();
 
         // 根据 modelId 查询模型配置
@@ -98,8 +92,6 @@ public class ChatServiceImpl implements ChatService {
             throw new IllegalArgumentException("模型配置不存在，modelId: " + modelId);
         }
 
-        log.info("查询到模型配置: modelCode={}, modelName={}", modelConfig.getModelCode(), modelConfig.getModelName());
-
         // 检查模型是否启用
         if (!modelConfig.getEnabled()) {
             log.error("模型已禁用: modelId={}", modelId);
@@ -107,32 +99,27 @@ public class ChatServiceImpl implements ChatService {
         }
 
         // 创建 AgentContext
-        AgentContext agentContext = new AgentContext(sink, modelConfig, sessionId, requestId);
+        AgentContext agentContext = new AgentContext(sink, modelConfig, userChatRequest.getSessionId(), userChatRequest.getRequestId());
         String userMessage = userChatRequest.getMessage();
         agentContext.setUserMessage(userMessage);
-
-        log.info("设置用户消息: {}", userMessage);
 
         List<Long> toolIds = userChatRequest.getToolIds();
         if (CollectionUtils.isNotEmpty(toolIds)) {
             List<ToolCallback> tools = this.functionToolFactory.getAllTools(toolIds);
-            log.info("设置自定义工具: toolIds={}, 工具数量={}", toolIds, tools.size());
             agentContext.setToolCallbacks(tools);
         } else {
             List<ToolCallback> builtinTools = this.functionToolFactory.getBuiltinTools();
-            log.info("设置内置工具: 工具数量={}", builtinTools.size());
             agentContext.setToolCallbacks(builtinTools);
         }
 
         // 根据模型配置创建 ChatClient
         ChatClient chatClient = this.dynamicChatClient.createFromModelConfig(modelConfig);
-        log.info("创建 ChatClient 成功");
-
         // 异步处理 LLM 调用，避免阻塞订阅
         CompletableFuture.runAsync(() -> {
             try {
-                ReActLLM reActLLM = new DataCollectorAgent(chatClient, agentContext);
-                reActLLM.run(userMessage);
+                ReActLLM<FileContentMessage> reActLLM = new MultiCollaborationAgent(chatClient, agentContext);
+                FileContentMessage finalContent = reActLLM.run(userMessage);
+                agentContext.complete(finalContent);
             } catch (Exception e) {
                 agentContext.error(e);
                 sink.tryEmitError(e);

@@ -5,6 +5,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import io.github.hijun.agent.common.enums.ChatMode;
 import io.github.hijun.agent.converter.SessionConverter;
 import io.github.hijun.agent.entity.dto.SessionDTO;
 import io.github.hijun.agent.entity.po.Session;
@@ -89,6 +90,10 @@ public class SessionServiceImpl extends ServiceImpl<SessionMapper, Session> impl
 
         Session entity = SessionConverter.INSTANCE.toPo(form);
         entity.setTitle("新对话");
+        // 设置默认聊天模式为智能问答
+        if (entity.getChatMode() == null) {
+            entity.setChatMode(ChatMode.CHAT);
+        }
         super.save(entity);
     }
 

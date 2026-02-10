@@ -10,6 +10,7 @@
         <result column="deleted" property="deleted"/>
         <result column="title" property="title"/>
         <result column="model_code" property="modelCode"/>
+        <result column="chat_mode" property="chatMode"/>
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -19,7 +20,8 @@
         a.update_time,
         a.deleted,
         a.title,
-        a.model_code
+        a.model_code,
+        a.chat_mode
     </sql>
 
 </mapper>
